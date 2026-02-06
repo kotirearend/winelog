@@ -386,6 +386,17 @@ export default function TastingDetailPage() {
         };
       });
 
+      // Play beefy soundbite for a perfect 100!
+      if (expandedEntry.totalScore === 100) {
+        try {
+          const audio = new Audio("/beefy.mp3");
+          audio.volume = 1.0;
+          audio.play();
+        } catch (audioErr) {
+          console.error("Could not play soundbite:", audioErr);
+        }
+      }
+
       setExpandedEntry(null);
       setEntryPhoto(null);
       setEntryPhotoPreview(null);
