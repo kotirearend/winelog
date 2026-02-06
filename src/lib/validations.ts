@@ -26,9 +26,13 @@ export const locationSchema = z.object({
 
 // Bottle schemas
 export const bottleCreateSchema = z.object({
-  name: z.string().min(1, 'Bottle name is required'),
-  locationId: z.string().uuid('Invalid location ID'),
+  name: z.string().min(1, 'Wine name is required'),
+  producer: z.string().optional(),
   vintage: z.number().int().optional(),
+  grapes: z.array(z.string()).optional(),
+  country: z.string().optional(),
+  region: z.string().optional(),
+  locationId: z.string().uuid('Invalid location ID').optional(),
   purchaseDate: z.string().optional(),
   purchaseSourceType: z
     .enum(['RESTAURANT', 'SHOP', 'OTHER'])

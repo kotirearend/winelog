@@ -23,9 +23,12 @@ interface Bottle {
   name: string;
   producer?: string;
   vintage?: number;
+  grapes?: string[];
+  country?: string;
+  region?: string;
   photoUrl?: string;
   quantity: number;
-  locationId: string;
+  locationId?: string;
   priceAmount?: string;
   priceCurrency?: string;
 }
@@ -191,40 +194,49 @@ export default function BottlesPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg text-wine-950 truncate">
-                      {bottle.name}
-                    </h3>
-
                     {bottle.producer && (
-                      <p className="text-sm text-wine-700 truncate mt-0.5">
+                      <p className="text-xs font-semibold text-[#7C2D36] uppercase tracking-wide truncate">
                         {bottle.producer}
                       </p>
                     )}
+                    <h3 className="font-bold text-lg text-[#1A1A1A] truncate mt-0.5">
+                      {bottle.name}
+                    </h3>
 
-                    <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="mt-2 flex flex-wrap gap-1.5">
                       {bottle.vintage && (
-                        <Badge variant="secondary" className="text-xs bg-wine-100 text-wine-800 border-0">
+                        <Badge variant="secondary" className="text-xs bg-[#FCE4E8] text-[#7C2D36] border-0">
                           {bottle.vintage}
                         </Badge>
                       )}
-                      {bottle.quantity > 0 && (
-                        <Badge variant="secondary" className="text-xs bg-wine-800 text-white border-0">
-                          {bottle.quantity} {bottle.quantity === 1 ? 'bottle' : 'bottles'}
+                      {bottle.country && (
+                        <Badge variant="secondary" className="text-xs bg-[#F5F1EB] text-[#6B7280] border-0">
+                          {bottle.country}
+                        </Badge>
+                      )}
+                      {bottle.region && (
+                        <Badge variant="secondary" className="text-xs bg-[#F5F1EB] text-[#6B7280] border-0">
+                          {bottle.region}
                         </Badge>
                       )}
                     </div>
 
-                    <div className="mt-3 space-y-1.5">
-                      {bottle.locationId && locations.length > 0 && (
-                        <p className="text-xs text-wine-700 font-medium">
-                          {locations.find(l => l.id === bottle.locationId)?.name || ""}
-                        </p>
-                      )}
+                    {bottle.grapes && bottle.grapes.length > 0 && (
+                      <p className="text-xs text-[#6B7280] mt-2 truncate">
+                        {bottle.grapes.join(", ")}
+                      </p>
+                    )}
 
+                    <div className="mt-2 flex items-center gap-3">
+                      {bottle.quantity > 0 && (
+                        <span className="text-xs font-semibold text-[#7C2D36]">
+                          ×{bottle.quantity}
+                        </span>
+                      )}
                       {bottle.priceAmount && (
-                        <p className="text-sm font-semibold text-gold-600">
+                        <span className="text-xs font-semibold text-[#B8860B]">
                           {bottle.priceCurrency || "GBP"} {Number(bottle.priceAmount).toFixed(2)}
-                        </p>
+                        </span>
                       )}
                     </div>
                   </div>

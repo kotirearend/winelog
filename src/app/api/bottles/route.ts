@@ -66,8 +66,12 @@ export async function POST(request: Request) {
 
     const {
       name,
+      producer,
       locationId,
       vintage,
+      grapes,
+      country,
+      region,
       purchaseDate,
       purchaseSourceType,
       purchaseSourceName,
@@ -78,22 +82,24 @@ export async function POST(request: Request) {
       photoUrl,
     } = result.data;
 
-    // Verify locationId belongs to user
-    const location = await db
-      .select()
-      .from(locations)
-      .where(
-        and(
-          eq(locations.id, locationId),
-          eq(locations.userId, authUser.userId)
-        )
-      );
+    // Verify locationId belongs to user (if provided)
+    if (locationId) {
+      const location = await db
+        .select()
+        .from(locations)
+        .where(
+          and(
+            eq(locations.id, locationId),
+            eq(locations.userId, authUser.userId)
+          )
+        );
 
-    if (location.length === 0) {
-      return NextResponse.json(
-        { error: 'Location not found or unauthorized' },
-        { status: 404 }
-      );
+      if (location.length === 0) {
+        return NextResponse.json(
+          { error: 'Location not found or unauthorized' },
+          { status: 404 }
+        );
+      }
     }
 
     const newBottle = await db
@@ -101,8 +107,12 @@ export async function POST(request: Request) {
       .values({
         userId: authUser.userId,
         name,
-        locationId,
+        producer: producer || null,
+        locationId: locationId || null,
         vintage: vintage || null,
+        grapes: grapes || null,
+        country: country || null,
+        region: region || null,
         purchaseDate: purchaseDate || null,
         purchaseSourceType: purchaseSourceType || null,
         purchaseSourceName: purchaseSourceName || null,

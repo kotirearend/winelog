@@ -88,11 +88,19 @@ export async function GET() {
       CREATE INDEX IF NOT EXISTS idx_locations_user_id ON locations(user_id);
     `);
 
+    // Migration: add grapes, country, region columns and make location_id nullable
+    await sql.unsafe(`
+      ALTER TABLE bottles ADD COLUMN IF NOT EXISTS grapes JSONB;
+      ALTER TABLE bottles ADD COLUMN IF NOT EXISTS country VARCHAR(255);
+      ALTER TABLE bottles ADD COLUMN IF NOT EXISTS region VARCHAR(255);
+      ALTER TABLE bottles ALTER COLUMN location_id DROP NOT NULL;
+    `);
+
     await sql.end();
 
     return NextResponse.json({
       success: true,
-      message: 'All tables created successfully',
+      message: 'All tables created/migrated successfully',
       tables: ['users', 'locations', 'bottles', 'tasting_sessions', 'tasting_entries'],
     });
   } catch (error) {

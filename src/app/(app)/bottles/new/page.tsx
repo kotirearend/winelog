@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronUp, MapPin, Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, Globe, X } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,54 +11,46 @@ import { PhotoCapture } from "@/components/ui/photo-capture";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
-interface Location {
-  id: string;
-  name: string;
-}
-
 const PURCHASE_SOURCES = ["Restaurant", "Shop", "Other"];
+
+const COMMON_GRAPES = [
+  "Cabernet Sauvignon", "Merlot", "Pinot Noir", "Syrah", "Shiraz",
+  "Grenache", "Tempranillo", "Sangiovese", "Nebbiolo", "Malbec",
+  "Zinfandel", "Mourvèdre", "Gamay", "Barbera", "Carmenère",
+  "Chardonnay", "Sauvignon Blanc", "Riesling", "Pinot Grigio",
+  "Gewürztraminer", "Viognier", "Chenin Blanc", "Sémillon",
+  "Muscat", "Albariño", "Grüner Veltliner", "Verdejo",
+  "Trebbiano", "Garganega", "Torrontés",
+];
 
 export default function AddBottlePage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [locations, setLocations] = useState<Location[]>([]);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
-  const [showAddLocation, setShowAddLocation] = useState(false);
-  const [defaultCurrency, setDefaultCurrency] = useState("USD");
+  const [defaultCurrency, setDefaultCurrency] = useState("GBP");
 
-  // Form state
+  // Form state — core fields
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [name, setName] = useState("");
-  const [selectedLocationId, setSelectedLocationId] = useState<string>("");
-  const [newLocationName, setNewLocationName] = useState("");
+  const [producer, setProducer] = useState("");
   const [vintage, setVintage] = useState("");
+  const [name, setName] = useState("");
+  const [grapes, setGrapes] = useState<string[]>([]);
+  const [grapeInput, setGrapeInput] = useState("");
+  const [showGrapeSuggestions, setShowGrapeSuggestions] = useState(false);
+  const [country, setCountry] = useState("");
+  const [region, setRegion] = useState("");
+
+  // Form state — more details
   const [purchaseDate, setPurchaseDate] = useState("");
   const [purchaseSource, setPurchaseSource] = useState<string>("");
   const [purchaseSourceName, setPurchaseSourceName] = useState("");
   const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState(defaultCurrency);
-  const [subLocation, setSubLocation] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const nameInputRef = useRef<HTMLInputElement>(null);
-
-  const fetchLocations = useCallback(async () => {
-    try {
-      const data = await api.get("/locations");
-      const locationsList = Array.isArray(data) ? data : data.data || [];
-      setLocations(locationsList);
-
-      const lastLocationId = localStorage.getItem("lastUsedLocationId");
-      if (lastLocationId && locationsList.some((l: Location) => l.id === lastLocationId)) {
-        setSelectedLocationId(lastLocationId);
-      } else if (locationsList.length > 0) {
-        setSelectedLocationId(locationsList[0].id);
-      }
-    } catch (err) {
-      console.error("Failed to fetch locations:", err);
-    }
-  }, []);
+  const producerInputRef = useRef<HTMLInputElement>(null);
+  const grapeInputRef = useRef<HTMLInputElement>(null);
 
   const fetchUserSettings = useCallback(async () => {
     try {
@@ -73,23 +65,54 @@ export default function AddBottlePage() {
   }, []);
 
   useEffect(() => {
-    fetchLocations();
     fetchUserSettings();
-  }, [fetchLocations, fetchUserSettings]);
+  }, [fetchUserSettings]);
 
   useEffect(() => {
-    nameInputRef.current?.focus();
+    producerInputRef.current?.focus();
   }, []);
+
+  // Grape suggestions filtered by input
+  const filteredGrapes = grapeInput.trim()
+    ? COMMON_GRAPES.filter(
+        (g) =>
+          g.toLowerCase().includes(grapeInput.toLowerCase()) &&
+          !grapes.includes(g)
+      ).slice(0, 6)
+    : [];
+
+  const addGrape = (grape: string) => {
+    const trimmed = grape.trim();
+    if (trimmed && !grapes.includes(trimmed)) {
+      setGrapes([...grapes, trimmed]);
+    }
+    setGrapeInput("");
+    setShowGrapeSuggestions(false);
+    grapeInputRef.current?.focus();
+  };
+
+  const removeGrape = (grape: string) => {
+    setGrapes(grapes.filter((g) => g !== grape));
+  };
+
+  const handleGrapeKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (filteredGrapes.length > 0) {
+        addGrape(filteredGrapes[0]);
+      } else if (grapeInput.trim()) {
+        addGrape(grapeInput);
+      }
+    } else if (e.key === "Backspace" && !grapeInput && grapes.length > 0) {
+      removeGrape(grapes[grapes.length - 1]);
+    }
+  };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
     if (!name.trim()) {
-      newErrors.name = "Bottle name is required";
-    }
-
-    if (!selectedLocationId && !newLocationName.trim()) {
-      newErrors.location = "Please select or add a location";
+      newErrors.name = "Wine name is required";
     }
 
     setErrors(newErrors);
@@ -121,33 +144,22 @@ export default function AddBottlePage() {
         photoUrl = await uploadPhoto(selectedFile);
       }
 
-      let finalLocationId = selectedLocationId;
-
-      if (!selectedLocationId && newLocationName.trim()) {
-        const newLocation = await api.post("/locations", {
-          name: newLocationName.trim(),
-        });
-        finalLocationId = newLocation.id;
-      }
-
-      if (finalLocationId) {
-        localStorage.setItem("lastUsedLocationId", finalLocationId);
-      }
-
       const bottleData: Record<string, unknown> = {
         name: name.trim(),
-        locationId: finalLocationId,
         quantity: parseInt(quantity) || 1,
       };
 
+      if (producer.trim()) bottleData.producer = producer.trim();
       if (photoUrl) bottleData.photoUrl = photoUrl;
       if (vintage) bottleData.vintage = parseInt(vintage);
+      if (grapes.length > 0) bottleData.grapes = grapes;
+      if (country.trim()) bottleData.country = country.trim();
+      if (region.trim()) bottleData.region = region.trim();
       if (purchaseDate) bottleData.purchaseDate = purchaseDate;
       if (purchaseSource) bottleData.purchaseSourceType = purchaseSource.toUpperCase();
       if (purchaseSourceName) bottleData.purchaseSourceName = purchaseSourceName;
       if (price) bottleData.priceAmount = parseFloat(price);
       if (currency) bottleData.priceCurrency = currency;
-      if (subLocation) bottleData.subLocationText = subLocation;
 
       const response = await api.post("/bottles", bottleData);
 
@@ -164,7 +176,7 @@ export default function AddBottlePage() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] pb-28 sm:pb-0">
-      <PageHeader title="Add Bottle" showBack variant="wine" />
+      <PageHeader title="Add Wine" showBack variant="wine" />
 
       <form onSubmit={handleSubmit} className="p-4 sm:p-6 max-w-2xl mx-auto space-y-6">
         {/* Photo Capture */}
@@ -175,78 +187,127 @@ export default function AddBottlePage() {
           />
         </Card>
 
-        {/* Name */}
+        {/* Wine Maker */}
         <div>
           <Input
-            ref={nameInputRef}
-            label="Bottle Name"
-            placeholder="e.g., Cabernet Sauvignon Reserve"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            error={errors.name}
-            required
+            ref={producerInputRef}
+            label="Wine Maker"
+            placeholder="e.g., Château Margaux"
+            value={producer}
+            onChange={(e) => setProducer(e.target.value)}
             autoFocus
           />
         </div>
 
-        {/* Location */}
+        {/* Vintage */}
+        <div>
+          <Input
+            label="Vintage"
+            type="number"
+            placeholder="e.g., 2018"
+            value={vintage}
+            onChange={(e) => setVintage(e.target.value)}
+            min="1900"
+            max={new Date().getFullYear()}
+          />
+        </div>
+
+        {/* Wine Name */}
+        <div>
+          <Input
+            label="Wine Name"
+            placeholder="e.g., Grand Vin"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            error={errors.name}
+            required
+          />
+        </div>
+
+        {/* Grapes - Tag Chips */}
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-semibold text-[#1A1A1A] flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-[#7C2D36]" />
-            Location
+          <label className="text-sm font-semibold text-[#1A1A1A]">
+            Grapes
           </label>
 
-          {!showAddLocation ? (
-            <div className="flex gap-2">
-              <select
-                value={selectedLocationId}
-                onChange={(e) => setSelectedLocationId(e.target.value)}
-                className="flex-1 h-11 rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-2 text-sm text-[#1A1A1A] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20"
+          {/* Selected grape chips */}
+          <div className="flex flex-wrap gap-2 min-h-[1rem]">
+            {grapes.map((grape) => (
+              <span
+                key={grape}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#7C2D36] text-white text-sm font-medium"
               >
-                <option value="">Select a location</option>
-                {locations.map((loc) => (
-                  <option key={loc.id} value={loc.id}>
-                    {loc.name}
-                  </option>
+                {grape}
+                <button
+                  type="button"
+                  onClick={() => removeGrape(grape)}
+                  className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            ))}
+          </div>
+
+          {/* Grape input with autocomplete */}
+          <div className="relative">
+            <input
+              ref={grapeInputRef}
+              type="text"
+              placeholder={grapes.length > 0 ? "Add another grape..." : "e.g., Cabernet Sauvignon"}
+              value={grapeInput}
+              onChange={(e) => {
+                setGrapeInput(e.target.value);
+                setShowGrapeSuggestions(true);
+              }}
+              onFocus={() => setShowGrapeSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowGrapeSuggestions(false), 200)}
+              onKeyDown={handleGrapeKeyDown}
+              className="w-full h-11 rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-2 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20"
+            />
+
+            {/* Suggestions dropdown */}
+            {showGrapeSuggestions && filteredGrapes.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 bg-white rounded-xl border-2 border-[#E5E1DB] shadow-lg overflow-hidden">
+                {filteredGrapes.map((grape) => (
+                  <button
+                    key={grape}
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => addGrape(grape)}
+                    className="w-full text-left px-4 py-3 text-sm text-[#1A1A1A] hover:bg-[#FDF2F4] hover:text-[#7C2D36] transition-colors border-b border-[#E5E1DB] last:border-b-0"
+                  >
+                    {grape}
+                  </button>
                 ))}
-              </select>
+              </div>
+            )}
+          </div>
+        </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowAddLocation(true)}
-                className="rounded-xl"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Add
-              </Button>
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              <Input
-                placeholder="New location name"
-                value={newLocationName}
-                onChange={(e) => setNewLocationName(e.target.value)}
-                className="flex-1"
-              />
+        {/* Country of Origin */}
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-semibold text-[#1A1A1A] flex items-center gap-2">
+            <Globe className="w-4 h-4 text-[#7C2D36]" />
+            Country of Origin
+          </label>
+          <input
+            type="text"
+            placeholder="e.g., France"
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            className="h-11 rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-2 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20"
+          />
+        </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowAddLocation(false);
-                  setNewLocationName("");
-                }}
-                className="rounded-xl"
-              >
-                Cancel
-              </Button>
-            </div>
-          )}
-
-          {errors.location && (
-            <p className="text-xs text-red-600 mt-1">{errors.location}</p>
-          )}
+        {/* Region */}
+        <div>
+          <Input
+            label="Region"
+            placeholder="e.g., Bordeaux, Barossa Valley"
+            value={region}
+            onChange={(e) => setRegion(e.target.value)}
+          />
         </div>
 
         {/* More Details Toggle */}
@@ -260,22 +321,12 @@ export default function AddBottlePage() {
           ) : (
             <ChevronDown className="w-4 h-4" />
           )}
-          {showMoreDetails ? "Hide Details" : "Add More Details"}
+          {showMoreDetails ? "Hide Purchase Details" : "Add Purchase Details"}
         </button>
 
         {/* Expandable Details */}
         {showMoreDetails && (
           <Card variant="outlined" className="p-5 rounded-2xl space-y-5">
-            <Input
-              label="Vintage"
-              type="number"
-              placeholder="e.g., 2018"
-              value={vintage}
-              onChange={(e) => setVintage(e.target.value)}
-              min="1900"
-              max={new Date().getFullYear()}
-            />
-
             <Input
               label="Purchase Date"
               type="date"
@@ -334,9 +385,9 @@ export default function AddBottlePage() {
                   onChange={(e) => setCurrency(e.target.value)}
                   className="h-11 rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-2 text-sm text-[#1A1A1A] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20"
                 >
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
                   <option value="GBP">GBP</option>
+                  <option value="EUR">EUR</option>
+                  <option value="USD">USD</option>
                   <option value="CAD">CAD</option>
                   <option value="AUD">AUD</option>
                   <option value="NZD">NZD</option>
@@ -345,13 +396,6 @@ export default function AddBottlePage() {
                 </select>
               </div>
             </div>
-
-            <Input
-              label="Sub-Location"
-              placeholder="e.g., Shelf 3, Bottom right"
-              value={subLocation}
-              onChange={(e) => setSubLocation(e.target.value)}
-            />
 
             <Input
               label="Quantity"
