@@ -7,9 +7,10 @@ import { getAuthUser } from '@/lib/auth';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authUser = await getAuthUser(request);
 
     const session = await db
@@ -17,7 +18,7 @@ export async function GET(
       .from(tastingSessions)
       .where(
         and(
-          eq(tastingSessions.id, params.id),
+          eq(tastingSessions.id, id),
           eq(tastingSessions.userId, authUser.userId)
         )
       );
@@ -56,7 +57,7 @@ export async function GET(
       })
       .from(tastingEntries)
       .leftJoin(bottles, eq(tastingEntries.bottleId, bottles.id))
-      .where(eq(tastingEntries.tastingSessionId, params.id));
+      .where(eq(tastingEntries.tastingSessionId, id));
 
     return NextResponse.json({
       ...session[0],
@@ -79,9 +80,10 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authUser = await getAuthUser(request);
     const body = await request.json();
     const result = tastingUpdateSchema.safeParse(body);
@@ -99,7 +101,7 @@ export async function PATCH(
       .from(tastingSessions)
       .where(
         and(
-          eq(tastingSessions.id, params.id),
+          eq(tastingSessions.id, id),
           eq(tastingSessions.userId, authUser.userId)
         )
       );
@@ -126,7 +128,7 @@ export async function PATCH(
     const updatedSession = await db
       .update(tastingSessions)
       .set(updateData)
-      .where(eq(tastingSessions.id, params.id))
+      .where(eq(tastingSessions.id, id))
       .returning();
 
     return NextResponse.json(updatedSession[0]);

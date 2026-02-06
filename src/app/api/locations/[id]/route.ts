@@ -7,9 +7,10 @@ import { getAuthUser } from '@/lib/auth';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authUser = await getAuthUser(request);
     const body = await request.json();
     const result = locationSchema.safeParse(body);
@@ -29,7 +30,7 @@ export async function PATCH(
       .from(locations)
       .where(
         and(
-          eq(locations.id, params.id),
+          eq(locations.id, id),
           eq(locations.userId, authUser.userId)
         )
       );
@@ -44,7 +45,7 @@ export async function PATCH(
     const updatedLocation = await db
       .update(locations)
       .set({ name, updatedAt: new Date() })
-      .where(eq(locations.id, params.id))
+      .where(eq(locations.id, id))
       .returning();
 
     return NextResponse.json(updatedLocation[0]);

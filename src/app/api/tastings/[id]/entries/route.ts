@@ -7,9 +7,10 @@ import { getAuthUser } from '@/lib/auth';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authUser = await getAuthUser(request);
     const body = await request.json();
     const result = tastingEntryCreateSchema.safeParse(body);
@@ -27,7 +28,7 @@ export async function POST(
       .from(tastingSessions)
       .where(
         and(
-          eq(tastingSessions.id, params.id),
+          eq(tastingSessions.id, id),
           eq(tastingSessions.userId, authUser.userId)
         )
       );
@@ -64,7 +65,7 @@ export async function POST(
     const newEntry = await db
       .insert(tastingEntries)
       .values({
-        tastingSessionId: params.id,
+        tastingSessionId: id,
         bottleId: bottleId || null,
         adHocName: adHocName || null,
         adHocPhotoUrl: adHocPhotoUrl || null,

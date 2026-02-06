@@ -7,9 +7,10 @@ import { getAuthUser } from '@/lib/auth';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string; entryId: string } }
+  { params }: { params: Promise<{ id: string; entryId: string }> }
 ) {
   try {
+    const { id, entryId } = await params;
     const authUser = await getAuthUser(request);
     const body = await request.json();
     const result = saveToCellarSchema.safeParse(body);
@@ -27,7 +28,7 @@ export async function POST(
       .from(tastingSessions)
       .where(
         and(
-          eq(tastingSessions.id, params.id),
+          eq(tastingSessions.id, id),
           eq(tastingSessions.userId, authUser.userId)
         )
       );
@@ -45,8 +46,8 @@ export async function POST(
       .from(tastingEntries)
       .where(
         and(
-          eq(tastingEntries.id, params.entryId),
-          eq(tastingEntries.tastingSessionId, params.id)
+          eq(tastingEntries.id, entryId),
+          eq(tastingEntries.tastingSessionId, id)
         )
       );
 
@@ -108,7 +109,7 @@ export async function POST(
         saveToCellar: true,
         updatedAt: new Date(),
       })
-      .where(eq(tastingEntries.id, params.entryId))
+      .where(eq(tastingEntries.id, entryId))
       .returning();
 
     return NextResponse.json({

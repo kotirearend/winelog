@@ -7,9 +7,10 @@ import { getAuthUser } from '@/lib/auth';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string; entryId: string } }
+  { params }: { params: Promise<{ id: string; entryId: string }> }
 ) {
   try {
+    const { id, entryId } = await params;
     const authUser = await getAuthUser(request);
     const body = await request.json();
     const result = tastingEntryScoreSchema.safeParse(body);
@@ -27,7 +28,7 @@ export async function PATCH(
       .from(tastingSessions)
       .where(
         and(
-          eq(tastingSessions.id, params.id),
+          eq(tastingSessions.id, id),
           eq(tastingSessions.userId, authUser.userId)
         )
       );
@@ -45,8 +46,8 @@ export async function PATCH(
       .from(tastingEntries)
       .where(
         and(
-          eq(tastingEntries.id, params.entryId),
-          eq(tastingEntries.tastingSessionId, params.id)
+          eq(tastingEntries.id, entryId),
+          eq(tastingEntries.tastingSessionId, id)
         )
       );
 
@@ -92,7 +93,7 @@ export async function PATCH(
     const updatedEntry = await db
       .update(tastingEntries)
       .set(updateData)
-      .where(eq(tastingEntries.id, params.entryId))
+      .where(eq(tastingEntries.id, entryId))
       .returning();
 
     return NextResponse.json(updatedEntry[0]);
@@ -113,9 +114,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string; entryId: string } }
+  { params }: { params: Promise<{ id: string; entryId: string }> }
 ) {
   try {
+    const { id, entryId } = await params;
     const authUser = await getAuthUser(request);
 
     // Verify session belongs to user
@@ -124,7 +126,7 @@ export async function DELETE(
       .from(tastingSessions)
       .where(
         and(
-          eq(tastingSessions.id, params.id),
+          eq(tastingSessions.id, id),
           eq(tastingSessions.userId, authUser.userId)
         )
       );
@@ -142,8 +144,8 @@ export async function DELETE(
       .from(tastingEntries)
       .where(
         and(
-          eq(tastingEntries.id, params.entryId),
-          eq(tastingEntries.tastingSessionId, params.id)
+          eq(tastingEntries.id, entryId),
+          eq(tastingEntries.tastingSessionId, id)
         )
       );
 
@@ -156,7 +158,7 @@ export async function DELETE(
 
     await db
       .delete(tastingEntries)
-      .where(eq(tastingEntries.id, params.entryId));
+      .where(eq(tastingEntries.id, entryId));
 
     return NextResponse.json({ success: true });
   } catch (error) {

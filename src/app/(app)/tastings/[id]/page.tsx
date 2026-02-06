@@ -29,41 +29,45 @@ interface Bottle {
   photoUrl?: string;
 }
 
-interface ScoreData {
-  appearance: number;
-  nose: number;
-  palate: number;
-  finish: number;
-  balance: number;
-}
-
 interface TastingEntry {
   id: string;
   bottleId?: string;
-  bottle?: Bottle;
   adHocName?: string;
-  photoUrl?: string;
-  scores?: ScoreData;
-  shortNotes?: string;
-  longNotes?: string;
+  adHocPhotoUrl?: string;
+  appearanceScore?: number;
+  noseScore?: number;
+  palateScore?: number;
+  finishScore?: number;
+  balanceScore?: number;
+  totalScore?: number;
+  notesShort?: string;
+  notesLong?: string;
   tags?: string[];
   saveToCellar?: boolean;
-  saveToCellarLocation?: string;
+  bottleName?: string;
+  bottleProducer?: string;
+  bottleVintage?: number;
+  bottlePhotoUrl?: string;
 }
 
 interface TastingSession {
   id: string;
   name: string;
-  date: string;
+  tastedAt: string;
   venue?: string;
   participants?: string;
   notes?: string;
-  entries: TastingEntry[];
+  entries?: TastingEntry[];
 }
 
-function getScore(scores?: ScoreData): number {
-  if (!scores) return 0;
-  return scores.appearance + scores.nose + scores.palate + scores.finish + scores.balance;
+function getScore(entry?: TastingEntry): number {
+  if (!entry) return 0;
+  const appearance = entry.appearanceScore || 0;
+  const nose = entry.noseScore || 0;
+  const palate = entry.palateScore || 0;
+  const finish = entry.finishScore || 0;
+  const balance = entry.balanceScore || 0;
+  return appearance + nose + palate + finish + balance;
 }
 
 function getScoreColor(score: number): string {
@@ -82,9 +86,13 @@ function formatDate(dateString: string): string {
 
 interface ExpandedEntryState {
   entryId: string;
-  scores: ScoreData;
-  shortNotes: string;
-  longNotes: string;
+  appearanceScore: number;
+  noseScore: number;
+  palateScore: number;
+  finishScore: number;
+  balanceScore: number;
+  notesShort: string;
+  notesLong: string;
   tags: string;
   isNew?: boolean;
   saveToCellar?: boolean;
@@ -171,7 +179,7 @@ export default function TastingDetailPage() {
         if (!prev) return prev;
         return {
           ...prev,
-          entries: [...prev.entries, newEntry],
+          entries: [...(prev.entries || []), newEntry],
         };
       });
 
@@ -195,29 +203,20 @@ export default function TastingDetailPage() {
 
       let photoUrl: string | undefined;
       if (adHocPhoto) {
-        const formData = new FormData();
-        formData.append("file", adHocPhoto);
-        const uploadRes = await api.fetch("/upload", {
-          method: "POST",
-          body: formData,
-          headers: {},
-        });
-        if (uploadRes.ok) {
-          const uploadData = await uploadRes.json();
-          photoUrl = uploadData.url;
-        }
+        const uploadData = await api.uploadFile("/uploads", adHocPhoto);
+        photoUrl = uploadData.url;
       }
 
       const newEntry = await api.post(`/tastings/${id}/entries`, {
         adHocName: adHocName.trim(),
-        photoUrl,
+        adHocPhotoUrl: photoUrl,
       });
 
       setTasting((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          entries: [...prev.entries, newEntry],
+          entries: [...(prev.entries || []), newEntry],
         };
       });
 
@@ -233,12 +232,15 @@ export default function TastingDetailPage() {
   };
 
   const handleExpandEntry = (entry: TastingEntry) => {
-    const totalScore = getScore(entry.scores);
     setExpandedEntry({
       entryId: entry.id,
-      scores: entry.scores || { appearance: 0, nose: 0, palate: 0, finish: 0, balance: 0 },
-      shortNotes: entry.shortNotes || "",
-      longNotes: entry.longNotes || "",
+      appearanceScore: entry.appearanceScore || 0,
+      noseScore: entry.noseScore || 0,
+      palateScore: entry.palateScore || 0,
+      finishScore: entry.finishScore || 0,
+      balanceScore: entry.balanceScore || 0,
+      notesShort: entry.notesShort || "",
+      notesLong: entry.notesLong || "",
       tags: (entry.tags || []).join(", "),
       saveToCellar: entry.saveToCellar || false,
       saveToCellarLocation: entry.saveToCellarLocation || "",
@@ -249,16 +251,17 @@ export default function TastingDetailPage() {
     if (!expandedEntry) return;
 
     try {
-      const totalScore = getScore(expandedEntry.scores);
       const payload = {
-        scores: expandedEntry.scores,
-        shortNotes: expandedEntry.shortNotes || undefined,
-        longNotes: expandedEntry.longNotes || undefined,
+        appearanceScore: expandedEntry.appearanceScore,
+        noseScore: expandedEntry.noseScore,
+        palateScore: expandedEntry.palateScore,
+        finishScore: expandedEntry.finishScore,
+        balanceScore: expandedEntry.balanceScore,
+        notesShort: expandedEntry.notesShort || undefined,
+        notesLong: expandedEntry.notesLong || undefined,
         tags: expandedEntry.tags
           ? expandedEntry.tags.split(",").map((t) => t.trim())
           : undefined,
-        saveToCellar: expandedEntry.saveToCellar || undefined,
-        saveToCellarLocation: expandedEntry.saveToCellarLocation || undefined,
       };
 
       await api.patch(`/tastings/${id}/entries/${expandedEntry.entryId}`, payload);
@@ -267,16 +270,19 @@ export default function TastingDetailPage() {
         if (!prev) return prev;
         return {
           ...prev,
-          entries: prev.entries.map((e) =>
+          entries: (prev.entries || []).map((e) =>
             e.id === expandedEntry.entryId
               ? {
                   ...e,
-                  scores: expandedEntry.scores,
-                  shortNotes: expandedEntry.shortNotes,
-                  longNotes: expandedEntry.longNotes,
+                  appearanceScore: expandedEntry.appearanceScore,
+                  noseScore: expandedEntry.noseScore,
+                  palateScore: expandedEntry.palateScore,
+                  finishScore: expandedEntry.finishScore,
+                  balanceScore: expandedEntry.balanceScore,
+                  notesShort: expandedEntry.notesShort,
+                  notesLong: expandedEntry.notesLong,
                   tags: expandedEntry.tags ? expandedEntry.tags.split(",").map((t) => t.trim()) : [],
                   saveToCellar: expandedEntry.saveToCellar,
-                  saveToCellarLocation: expandedEntry.saveToCellarLocation,
                 }
               : e
           ),
@@ -329,9 +335,9 @@ export default function TastingDetailPage() {
     );
   }
 
-  const sortedEntries = [...tasting.entries].sort((a, b) => {
-    const scoreA = getScore(a.scores);
-    const scoreB = getScore(b.scores);
+  const sortedEntries = [...(tasting.entries || [])].sort((a, b) => {
+    const scoreA = getScore(a);
+    const scoreB = getScore(b);
     return scoreB - scoreA;
   });
 
@@ -352,7 +358,7 @@ export default function TastingDetailPage() {
             className="w-full flex items-center justify-between p-4 bg-white rounded-lg border border-[#E5E1DB] hover:bg-[#FDFBF7] transition-colors"
           >
             <div className="text-left">
-              <p className="text-sm text-[#6B7280]">{formatDate(tasting.date)}</p>
+              <p className="text-sm text-[#6B7280]">{formatDate(tasting.tastedAt)}</p>
               {tasting.venue && <p className="text-sm font-medium text-[#1A1A1A]">{tasting.venue}</p>}
             </div>
             <ChevronDown
@@ -409,7 +415,7 @@ export default function TastingDetailPage() {
 
         {activeTab === "entries" && (
           <div className="space-y-6">
-            {tasting.entries.length === 0 ? (
+            {(tasting.entries || []).length === 0 ? (
               <EmptyState
                 icon={<Wine className="w-12 h-12" />}
                 title="No entries yet"
@@ -417,10 +423,10 @@ export default function TastingDetailPage() {
               />
             ) : (
               <div className="space-y-3">
-                {tasting.entries.map((entry) => {
-                  const score = getScore(entry.scores);
+                {(tasting.entries || []).map((entry) => {
+                  const score = getScore(entry);
                   const isExpanded = expandedEntry?.entryId === entry.id;
-                  const name = entry.bottle?.name || entry.adHocName || "Unknown";
+                  const name = entry.bottleName || entry.adHocName || "Unknown";
 
                   return (
                     <div key={entry.id}>
@@ -430,9 +436,9 @@ export default function TastingDetailPage() {
                       >
                         <div className="flex gap-4 items-start">
                           <div className="flex-shrink-0">
-                            {entry.photoUrl || entry.bottle?.photoUrl ? (
+                            {entry.adHocPhotoUrl || entry.bottlePhotoUrl ? (
                               <img
-                                src={entry.photoUrl || entry.bottle?.photoUrl}
+                                src={entry.adHocPhotoUrl || entry.bottlePhotoUrl}
                                 alt={name}
                                 className="w-16 h-20 rounded object-cover bg-[#F5F1EB]"
                               />
@@ -446,24 +452,24 @@ export default function TastingDetailPage() {
                           <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-[#1A1A1A] truncate">{name}</h4>
 
-                            {entry.bottle?.vintage && (
-                              <p className="text-sm text-[#6B7280]">{entry.bottle.vintage}</p>
+                            {entry.bottleVintage && (
+                              <p className="text-sm text-[#6B7280]">{entry.bottleVintage}</p>
                             )}
 
-                            {entry.shortNotes && (
+                            {entry.notesShort && (
                               <p className="text-sm text-[#6B7280] mt-1 line-clamp-2">
-                                {entry.shortNotes}
+                                {entry.notesShort}
                               </p>
                             )}
 
-                            {entry.scores && (
+                            {(entry.appearanceScore !== undefined || entry.noseScore !== undefined) && (
                               <div className="mt-2 flex gap-1">
                                 {[
-                                  { label: "A", value: entry.scores.appearance },
-                                  { label: "N", value: entry.scores.nose },
-                                  { label: "P", value: entry.scores.palate },
-                                  { label: "F", value: entry.scores.finish },
-                                  { label: "B", value: entry.scores.balance },
+                                  { label: "A", value: entry.appearanceScore || 0 },
+                                  { label: "N", value: entry.noseScore || 0 },
+                                  { label: "P", value: entry.palateScore || 0 },
+                                  { label: "F", value: entry.finishScore || 0 },
+                                  { label: "B", value: entry.balanceScore || 0 },
                                 ].map((cat) => (
                                   <div
                                     key={cat.label}
@@ -493,7 +499,7 @@ export default function TastingDetailPage() {
                             <div className="text-sm font-medium text-[#1A1A1A]">
                               Total Score:{" "}
                               <span className="text-xl font-bold text-[#7C2D36]">
-                                {getScore(expandedEntry.scores)}/100
+                                {expandedEntry.appearanceScore + expandedEntry.noseScore + expandedEntry.palateScore + expandedEntry.finishScore + expandedEntry.balanceScore}/100
                               </span>
                             </div>
 
@@ -501,13 +507,13 @@ export default function TastingDetailPage() {
                               <ScoreInput
                                 label="Appearance"
                                 category="COLOR, CLARITY, VISCOSITY"
-                                value={expandedEntry.scores.appearance}
+                                value={expandedEntry.appearanceScore}
                                 onChange={(v) =>
                                   setExpandedEntry((prev) =>
                                     prev
                                       ? {
                                           ...prev,
-                                          scores: { ...prev.scores, appearance: v },
+                                          appearanceScore: v,
                                         }
                                       : null
                                   )
@@ -517,13 +523,13 @@ export default function TastingDetailPage() {
                               <ScoreInput
                                 label="Nose"
                                 category="AROMA, INTENSITY, COMPLEXITY"
-                                value={expandedEntry.scores.nose}
+                                value={expandedEntry.noseScore}
                                 onChange={(v) =>
                                   setExpandedEntry((prev) =>
                                     prev
                                       ? {
                                           ...prev,
-                                          scores: { ...prev.scores, nose: v },
+                                          noseScore: v,
                                         }
                                       : null
                                   )
@@ -533,13 +539,13 @@ export default function TastingDetailPage() {
                               <ScoreInput
                                 label="Palate"
                                 category="TASTE, WEIGHT, TEXTURE"
-                                value={expandedEntry.scores.palate}
+                                value={expandedEntry.palateScore}
                                 onChange={(v) =>
                                   setExpandedEntry((prev) =>
                                     prev
                                       ? {
                                           ...prev,
-                                          scores: { ...prev.scores, palate: v },
+                                          palateScore: v,
                                         }
                                       : null
                                   )
@@ -549,13 +555,13 @@ export default function TastingDetailPage() {
                               <ScoreInput
                                 label="Finish"
                                 category="AFTERTASTE, LENGTH, CHARACTER"
-                                value={expandedEntry.scores.finish}
+                                value={expandedEntry.finishScore}
                                 onChange={(v) =>
                                   setExpandedEntry((prev) =>
                                     prev
                                       ? {
                                           ...prev,
-                                          scores: { ...prev.scores, finish: v },
+                                          finishScore: v,
                                         }
                                       : null
                                   )
@@ -565,13 +571,13 @@ export default function TastingDetailPage() {
                               <ScoreInput
                                 label="Balance"
                                 category="OVERALL HARMONY"
-                                value={expandedEntry.scores.balance}
+                                value={expandedEntry.balanceScore}
                                 onChange={(v) =>
                                   setExpandedEntry((prev) =>
                                     prev
                                       ? {
                                           ...prev,
-                                          scores: { ...prev.scores, balance: v },
+                                          balanceScore: v,
                                         }
                                       : null
                                   )
@@ -582,11 +588,11 @@ export default function TastingDetailPage() {
                             <Input
                               label="Short Notes"
                               placeholder="Quick impressions..."
-                              value={expandedEntry.shortNotes}
+                              value={expandedEntry.notesShort}
                               onChange={(e) =>
                                 setExpandedEntry((prev) =>
                                   prev
-                                    ? { ...prev, shortNotes: e.target.value }
+                                    ? { ...prev, notesShort: e.target.value }
                                     : null
                                 )
                               }
@@ -598,11 +604,11 @@ export default function TastingDetailPage() {
                               </label>
                               <textarea
                                 placeholder="Detailed tasting notes..."
-                                value={expandedEntry.longNotes}
+                                value={expandedEntry.notesLong}
                                 onChange={(e) =>
                                   setExpandedEntry((prev) =>
                                     prev
-                                      ? { ...prev, longNotes: e.target.value }
+                                      ? { ...prev, notesLong: e.target.value }
                                       : null
                                   )
                                 }
@@ -805,8 +811,8 @@ export default function TastingDetailPage() {
                     </thead>
                     <tbody>
                       {sortedEntries.map((entry, index) => {
-                        const score = getScore(entry.scores);
-                        const name = entry.bottle?.name || entry.adHocName || "Unknown";
+                        const score = getScore(entry);
+                        const name = entry.bottleName || entry.adHocName || "Unknown";
                         return (
                           <tr
                             key={entry.id}
@@ -822,19 +828,19 @@ export default function TastingDetailPage() {
                               <Badge variant="score">{score}</Badge>
                             </td>
                             <td className="p-3 text-center text-[#6B7280]">
-                              {entry.scores?.appearance || 0}
+                              {entry.appearanceScore || 0}
                             </td>
                             <td className="p-3 text-center text-[#6B7280]">
-                              {entry.scores?.nose || 0}
+                              {entry.noseScore || 0}
                             </td>
                             <td className="p-3 text-center text-[#6B7280]">
-                              {entry.scores?.palate || 0}
+                              {entry.palateScore || 0}
                             </td>
                             <td className="p-3 text-center text-[#6B7280]">
-                              {entry.scores?.finish || 0}
+                              {entry.finishScore || 0}
                             </td>
                             <td className="p-3 text-center text-[#6B7280]">
-                              {entry.scores?.balance || 0}
+                              {entry.balanceScore || 0}
                             </td>
                           </tr>
                         );

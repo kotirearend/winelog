@@ -7,9 +7,10 @@ import { getAuthUser } from '@/lib/auth';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authUser = await getAuthUser(request);
 
     const bottle = await db
@@ -17,7 +18,7 @@ export async function GET(
       .from(bottles)
       .where(
         and(
-          eq(bottles.id, params.id),
+          eq(bottles.id, id),
           eq(bottles.userId, authUser.userId)
         )
       );
@@ -47,9 +48,10 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authUser = await getAuthUser(request);
     const body = await request.json();
     const result = bottleUpdateSchema.safeParse(body);
@@ -67,7 +69,7 @@ export async function PATCH(
       .from(bottles)
       .where(
         and(
-          eq(bottles.id, params.id),
+          eq(bottles.id, id),
           eq(bottles.userId, authUser.userId)
         )
       );
@@ -122,7 +124,7 @@ export async function PATCH(
     const updatedBottle = await db
       .update(bottles)
       .set(updateData)
-      .where(eq(bottles.id, params.id))
+      .where(eq(bottles.id, id))
       .returning();
 
     return NextResponse.json(updatedBottle[0]);
