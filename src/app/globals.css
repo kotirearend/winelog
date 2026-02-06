@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+:root {
+  --wine-primary: #7C2D36;
+  --wine-primary-light: #9B3A44;
+  --wine-primary-dark: #5C1F28;
+  --bg-warm: #FDFBF7;
+  --bg-card: #FFFFFF;
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B7280;
+  --border-warm: #E5E1DB;
+  --accent-gold: #D4A847;
+  --accent-green: #059669;
+}
+
+body {
+  background-color: var(--bg-warm);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+/* Mobile-first: max-width container for app feel */
+.app-container {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  position: relative;
+}
+
+/* Safe area padding for mobile */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 4rem);
+  }
+}
+
+/* Hide scrollbar on mobile nav */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
