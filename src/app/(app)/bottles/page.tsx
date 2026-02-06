@@ -25,9 +25,9 @@ interface Bottle {
   vintage?: number;
   photoUrl?: string;
   quantity: number;
-  location?: Location;
-  price?: number;
-  currency?: string;
+  locationId: string;
+  priceAmount?: string;
+  priceCurrency?: string;
 }
 
 export default function BottlesPage() {
@@ -208,9 +208,9 @@ export default function BottlesPage() {
                     </div>
 
                     <div className="mt-3 space-y-1">
-                      {bottle.location && (
+                      {bottle.locationId && locations.length > 0 && (
                         <p className="text-xs text-[#6B7280]">
-                          {bottle.location.name}
+                          {locations.find(l => l.id === bottle.locationId)?.name || ""}
                         </p>
                       )}
 
@@ -218,10 +218,10 @@ export default function BottlesPage() {
                         Qty: {bottle.quantity}
                       </p>
 
-                      {bottle.price && (
+                      {bottle.priceAmount && (
                         <p className="text-sm text-[#6B7280]">
-                          {bottle.currency || "USD"}{" "}
-                          {bottle.price.toFixed(2)}
+                          {bottle.priceCurrency || "GBP"}{" "}
+                          {Number(bottle.priceAmount).toFixed(2)}
                         </p>
                       )}
                     </div>

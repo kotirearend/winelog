@@ -19,11 +19,11 @@ interface TastingEntry {
 interface TastingSession {
   id: string;
   name: string;
-  date: string;
+  tastedAt: string;
   venue?: string;
   participants?: string;
   notes?: string;
-  entries: TastingEntry[];
+  entries?: TastingEntry[];
 }
 
 function formatDate(dateString: string): string {
@@ -61,7 +61,7 @@ export default function TastingsPage() {
         // Sort by date, newest first
         tastingList.sort(
           (a: TastingSession, b: TastingSession) =>
-            new Date(b.date).getTime() - new Date(a.date).getTime()
+            new Date(b.tastedAt).getTime() - new Date(a.tastedAt).getTime()
         );
 
         setTastings(tastingList);
@@ -126,7 +126,8 @@ export default function TastingsPage() {
         ) : (
           <div className="space-y-4">
             {tastings.map((tasting) => {
-              const topScore = getTopScore(tasting.entries);
+              const entries = tasting.entries || [];
+              const topScore = getTopScore(entries);
               return (
                 <Card
                   key={tasting.id}
@@ -140,7 +141,7 @@ export default function TastingsPage() {
                       </h3>
 
                       <p className="text-sm text-[#6B7280] mt-1">
-                        {formatDate(tasting.date)}
+                        {formatDate(tasting.tastedAt)}
                       </p>
 
                       {tasting.venue && (
@@ -151,7 +152,7 @@ export default function TastingsPage() {
 
                       <div className="mt-3 flex flex-wrap gap-2">
                         <Badge variant="secondary">
-                          {tasting.entries.length} wine{tasting.entries.length !== 1 ? "s" : ""}
+                          {entries.length} wine{entries.length !== 1 ? "s" : ""}
                         </Badge>
 
                         {topScore !== null && (

@@ -13,15 +13,15 @@ import { Plus, Wine, ClipboardList } from "lucide-react";
 interface Bottle {
   id: string;
   name: string;
-  locationName: string;
+  locationId: string;
   photoUrl?: string;
 }
 
 interface Tasting {
   id: string;
   name: string;
-  date: string;
-  entryCount: number;
+  tastedAt: string;
+  entryCount?: number;
 }
 
 export default function HomePage() {
@@ -142,7 +142,7 @@ export default function HomePage() {
                         {bottle.name}
                       </h3>
                       <p className="text-sm text-[#6B7280] truncate">
-                        {bottle.locationName}
+                        &nbsp;
                       </p>
                     </div>
                   </CardContent>
@@ -186,8 +186,7 @@ export default function HomePage() {
                         {tasting.name}
                       </h3>
                       <p className="text-sm text-[#6B7280]">
-                        {formatDate(tasting.date)} • {tasting.entryCount}{" "}
-                        {tasting.entryCount === 1 ? "entry" : "entries"}
+                        {formatDate(tasting.tastedAt)}
                       </p>
                     </div>
                     <ClipboardList className="w-5 h-5 text-[#7C2D36] flex-shrink-0 ml-2" />
