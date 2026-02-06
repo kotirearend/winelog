@@ -13,11 +13,17 @@ export async function GET(request: Request) {
     const locationId = searchParams.get('locationId');
     const q = searchParams.get('q');
     const inStock = searchParams.get('inStock');
+    const beverageType = searchParams.get('beverageType');
 
     let query = db
       .select()
       .from(bottles)
       .where(eq(bottles.userId, authUser.userId));
+
+    // Filter by beverage type
+    if (beverageType) {
+      query = query.where(eq(bottles.beverageType, beverageType));
+    }
 
     // Apply filters
     if (locationId) {
@@ -102,6 +108,9 @@ export async function POST(request: Request) {
       }
     }
 
+    // Accept beverageType from raw body (not in zod schema)
+    const beverageType = body.beverageType === 'beer' ? 'beer' : 'wine';
+
     const newBottle = await db
       .insert(bottles)
       .values({
@@ -121,6 +130,7 @@ export async function POST(request: Request) {
         subLocationText: subLocationText || null,
         quantity: quantity || 1,
         photoUrl: photoUrl || null,
+        beverageType,
       })
       .returning();
 

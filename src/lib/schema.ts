@@ -36,6 +36,8 @@ export const bottles = pgTable('bottles', {
   region: varchar('region', { length: 255 }),
   // Status: in_cellar, consumed, archived
   status: varchar('status', { length: 20 }).default('in_cellar').notNull(),
+  // Beverage type: wine or beer
+  beverageType: varchar('beverage_type', { length: 10 }).default('wine').notNull(),
   // Storage location
   locationId: uuid('location_id').references(() => locations.id),
   subLocationText: varchar('sub_location_text', { length: 255 }),

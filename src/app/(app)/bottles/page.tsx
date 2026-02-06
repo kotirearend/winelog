@@ -62,6 +62,9 @@ export default function BottlesPage() {
       setIsLoading(true);
       const params = new URLSearchParams();
 
+      // Filter by beverage type
+      params.append("beverageType", beverageType);
+
       if (search) {
         params.append("q", search);
       }
@@ -87,7 +90,7 @@ export default function BottlesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [search, selectedLocationId, statusFilter]);
+  }, [search, selectedLocationId, statusFilter, beverageType]);
 
   useEffect(() => {
     fetchLocations();

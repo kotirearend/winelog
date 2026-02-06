@@ -217,7 +217,7 @@ export default function TastingDetailPage() {
 
   const fetchCellarBottles = useCallback(async () => {
     try {
-      const params = new URLSearchParams({ inStock: "true" });
+      const params = new URLSearchParams({ inStock: "true", beverageType });
       if (searchQuery) {
         params.append("q", searchQuery);
       }
@@ -227,7 +227,7 @@ export default function TastingDetailPage() {
       console.error("Failed to fetch cellar bottles:", err);
       setCellarBottles([]);
     }
-  }, [searchQuery]);
+  }, [searchQuery, beverageType]);
 
   const fetchLocations = useCallback(async () => {
     try {

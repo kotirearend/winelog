@@ -45,7 +45,7 @@ export default function HomePage() {
     const fetchBottles = async () => {
       try {
         setBottlesLoading(true);
-        const data = await api.get("/bottles");
+        const data = await api.get(`/bottles?beverageType=${beverageType}`);
         const list = Array.isArray(data) ? data : data.data || [];
         setAllBottles(list);
       } catch (error) {
@@ -55,7 +55,7 @@ export default function HomePage() {
       }
     };
     fetchBottles();
-  }, []);
+  }, [beverageType]);
 
   useEffect(() => {
     const fetchTastings = async () => {

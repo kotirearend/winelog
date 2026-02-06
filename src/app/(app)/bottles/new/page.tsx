@@ -196,6 +196,7 @@ export default function AddBottlePage() {
       const bottleData: Record<string, unknown> = {
         name: name.trim(),
         quantity: parseInt(quantity) || 1,
+        beverageType,
       };
 
       if (producer.trim()) bottleData.producer = producer.trim();
@@ -250,18 +251,20 @@ export default function AddBottlePage() {
           />
         </div>
 
-        {/* Vintage */}
-        <div>
-          <Input
-            label={isBeer ? "Year / Batch" : "Vintage"}
-            type="number"
-            placeholder={isBeer ? "e.g., 2024" : "e.g., 2018"}
-            value={vintage}
-            onChange={(e) => setVintage(e.target.value)}
-            min="1900"
-            max={new Date().getFullYear()}
-          />
-        </div>
+        {/* Vintage — wine only */}
+        {!isBeer && (
+          <div>
+            <Input
+              label="Vintage"
+              type="number"
+              placeholder="e.g., 2018"
+              value={vintage}
+              onChange={(e) => setVintage(e.target.value)}
+              min="1900"
+              max={new Date().getFullYear()}
+            />
+          </div>
+        )}
 
         {/* Wine Name */}
         <div>
@@ -286,7 +289,10 @@ export default function AddBottlePage() {
             {grapes.map((grape) => (
               <span
                 key={grape}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#7C2D36] text-white text-sm font-medium"
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-sm font-medium",
+                  isBeer ? "bg-[#B45309]" : "bg-[#7C2D36]"
+                )}
               >
                 {grape}
                 <button
@@ -336,30 +342,34 @@ export default function AddBottlePage() {
           </div>
         </div>
 
-        {/* Country of Origin */}
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-semibold text-[#1A1A1A] flex items-center gap-2">
-            <Globe className="w-4 h-4 text-[#7C2D36]" />
-            Country of Origin
-          </label>
-          <input
-            type="text"
-            placeholder="e.g., France"
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            className="h-11 rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-2 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20"
-          />
-        </div>
+        {/* Country of Origin — wine only */}
+        {!isBeer && (
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-[#1A1A1A] flex items-center gap-2">
+              <Globe className="w-4 h-4 text-[#7C2D36]" />
+              Country of Origin
+            </label>
+            <input
+              type="text"
+              placeholder="e.g., France"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="h-11 rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-2 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20"
+            />
+          </div>
+        )}
 
-        {/* Region */}
-        <div>
-          <Input
-            label="Region"
-            placeholder="e.g., Bordeaux, Barossa Valley"
-            value={region}
-            onChange={(e) => setRegion(e.target.value)}
-          />
-        </div>
+        {/* Region — wine only */}
+        {!isBeer && (
+          <div>
+            <Input
+              label="Region"
+              placeholder="e.g., Bordeaux, Barossa Valley"
+              value={region}
+              onChange={(e) => setRegion(e.target.value)}
+            />
+          </div>
+        )}
 
         {/* Storage Location */}
         <div className="flex flex-col gap-2">
