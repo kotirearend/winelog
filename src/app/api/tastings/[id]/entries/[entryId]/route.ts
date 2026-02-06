@@ -59,6 +59,8 @@ export async function PATCH(
     }
 
     const {
+      totalScore,
+      tastingNotes,
       appearanceScore,
       noseScore,
       palateScore,
@@ -73,18 +75,16 @@ export async function PATCH(
       updatedAt: new Date(),
     };
 
-    if (appearanceScore !== undefined)
-      updateData.appearanceScore = appearanceScore;
+    // New WSET-style fields
+    if (totalScore !== undefined) updateData.totalScore = totalScore;
+    if (tastingNotes !== undefined) updateData.tastingNotes = tastingNotes;
+
+    // Legacy score fields (backward compat)
+    if (appearanceScore !== undefined) updateData.appearanceScore = appearanceScore;
     if (noseScore !== undefined) updateData.noseScore = noseScore;
     if (palateScore !== undefined) updateData.palateScore = palateScore;
     if (finishScore !== undefined) updateData.finishScore = finishScore;
     if (balanceScore !== undefined) updateData.balanceScore = balanceScore;
-
-    // Compute totalScore server-side if all 5 scores are provided
-    const allScores = [appearanceScore, noseScore, palateScore, finishScore, balanceScore];
-    if (allScores.every(score => score !== undefined && score !== null)) {
-      updateData.totalScore = allScores.reduce((sum, score) => sum + score, 0);
-    }
 
     if (notesShort !== undefined) updateData.notesShort = notesShort;
     if (notesLong !== undefined) updateData.notesLong = notesLong;

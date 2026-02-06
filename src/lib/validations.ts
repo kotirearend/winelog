@@ -90,39 +90,43 @@ export const tastingEntryCreateSchema = z
   );
 
 export const tastingEntryScoreSchema = z.object({
-  appearanceScore: z
-    .number()
-    .int()
-    .min(0, 'Score must be between 0 and 20')
-    .max(20, 'Score must be between 0 and 20')
-    .optional(),
-  noseScore: z
-    .number()
-    .int()
-    .min(0, 'Score must be between 0 and 20')
-    .max(20, 'Score must be between 0 and 20')
-    .optional(),
-  palateScore: z
-    .number()
-    .int()
-    .min(0, 'Score must be between 0 and 20')
-    .max(20, 'Score must be between 0 and 20')
-    .optional(),
-  finishScore: z
-    .number()
-    .int()
-    .min(0, 'Score must be between 0 and 20')
-    .max(20, 'Score must be between 0 and 20')
-    .optional(),
-  balanceScore: z
-    .number()
-    .int()
-    .min(0, 'Score must be between 0 and 20')
-    .max(20, 'Score must be between 0 and 20')
-    .optional(),
+  // Overall quality score (0-100)
+  totalScore: z.number().int().min(0).max(100).optional(),
+  // Structured WSET-style tasting notes stored as JSON
+  tastingNotes: z.object({
+    // Appearance
+    clarity: z.string().optional(),
+    intensityAppearance: z.string().optional(),
+    colour: z.string().optional(),
+    otherAppearance: z.string().optional(),
+    // Nose
+    condition: z.string().optional(),
+    intensityNose: z.string().optional(),
+    aromaCharacteristics: z.string().optional(),
+    development: z.string().optional(),
+    // Palate
+    sweetness: z.string().optional(),
+    acidity: z.string().optional(),
+    tannin: z.string().optional(),
+    alcohol: z.string().optional(),
+    body: z.string().optional(),
+    flavourIntensity: z.string().optional(),
+    flavourCharacteristics: z.string().optional(),
+    finish: z.string().optional(),
+    // Conclusions
+    qualityLevel: z.string().optional(),
+    readiness: z.string().optional(),
+  }).optional(),
+  // Free text notes
   notesShort: z.string().max(500, 'Short notes must be 500 characters or less').optional(),
   notesLong: z.string().optional(),
   tags: z.array(z.string()).optional(),
+  // Legacy fields (kept for backward compat)
+  appearanceScore: z.number().int().min(0).max(20).optional(),
+  noseScore: z.number().int().min(0).max(20).optional(),
+  palateScore: z.number().int().min(0).max(20).optional(),
+  finishScore: z.number().int().min(0).max(20).optional(),
+  balanceScore: z.number().int().min(0).max(20).optional(),
 });
 
 // Save to cellar schema

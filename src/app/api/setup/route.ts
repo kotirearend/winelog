@@ -96,6 +96,11 @@ export async function GET() {
       ALTER TABLE bottles ALTER COLUMN location_id DROP NOT NULL;
     `);
 
+    // Migration: add tasting_notes JSONB to tasting_entries
+    await sql.unsafe(`
+      ALTER TABLE tasting_entries ADD COLUMN IF NOT EXISTS tasting_notes JSONB;
+    `);
+
     await sql.end();
 
     return NextResponse.json({

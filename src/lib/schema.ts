@@ -75,6 +75,7 @@ export const tastingEntries = pgTable('tasting_entries', {
   finishScore: integer('finish_score'),
   balanceScore: integer('balance_score'),
   totalScore: integer('total_score'),
+  tastingNotes: jsonb('tasting_notes').$type<Record<string, unknown>>(),
   notesShort: varchar('notes_short', { length: 500 }),
   notesLong: text('notes_long'),
   tags: jsonb('tags').$type<string[]>(),

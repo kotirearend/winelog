@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ScoreInput } from "@/components/ui/score-input";
 import { SearchInput } from "@/components/ui/search-input";
 import { PhotoCapture } from "@/components/ui/photo-capture";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -34,12 +33,8 @@ interface TastingEntry {
   bottleId?: string;
   adHocName?: string;
   adHocPhotoUrl?: string;
-  appearanceScore?: number;
-  noseScore?: number;
-  palateScore?: number;
-  finishScore?: number;
-  balanceScore?: number;
   totalScore?: number;
+  tastingNotes?: Record<string, string>;
   notesShort?: string;
   notesLong?: string;
   tags?: string[];
@@ -60,20 +55,53 @@ interface TastingSession {
   entries?: TastingEntry[];
 }
 
-function getScore(entry?: TastingEntry): number {
-  if (!entry) return 0;
-  const appearance = entry.appearanceScore || 0;
-  const nose = entry.noseScore || 0;
-  const palate = entry.palateScore || 0;
-  const finish = entry.finishScore || 0;
-  const balance = entry.balanceScore || 0;
-  return appearance + nose + palate + finish + balance;
+interface ExpandedEntryState {
+  entryId: string;
+  totalScore: number;
+  tastingNotes: {
+    clarity?: string;
+    intensityAppearance?: string;
+    colour?: string;
+    condition?: string;
+    intensityNose?: string;
+    aromaCharacteristics?: string;
+    development?: string;
+    sweetness?: string;
+    acidity?: string;
+    tannin?: string;
+    alcohol?: string;
+    body?: string;
+    flavourIntensity?: string;
+    flavourCharacteristics?: string;
+    finish?: string;
+    qualityLevel?: string;
+    readiness?: string;
+  };
+  notesLong: string;
 }
 
-function getScoreColor(score: number): string {
-  if (score >= 90) return "bg-[#D4A847] text-white"; // gold
-  if (score >= 80) return "bg-[#059669] text-white"; // green
-  return "bg-[#E5E1DB] text-[#1A1A1A]"; // neutral
+function getQualityLabel(qualityLevel?: string): string {
+  const labels: Record<string, string> = {
+    faulty: "Faulty",
+    poor: "Poor",
+    acceptable: "Acceptable",
+    good: "Good",
+    "very good": "Very Good",
+    outstanding: "Outstanding",
+  };
+  return labels[qualityLevel || ""] || "Not Rated";
+}
+
+function getQualityColor(qualityLevel?: string): string {
+  const colors: Record<string, string> = {
+    faulty: "bg-red-100 text-red-800",
+    poor: "bg-orange-100 text-orange-800",
+    acceptable: "bg-yellow-100 text-yellow-800",
+    good: "bg-blue-100 text-blue-800",
+    "very good": "bg-[#D4A847] text-white",
+    outstanding: "bg-[#7C2D36] text-white",
+  };
+  return colors[qualityLevel || ""] || "bg-[#E5E1DB] text-[#1A1A1A]";
 }
 
 function formatDate(dateString: string): string {
@@ -84,19 +112,33 @@ function formatDate(dateString: string): string {
   return `${month} ${day}, ${year}`;
 }
 
-interface ExpandedEntryState {
-  entryId: string;
-  appearanceScore: number;
-  noseScore: number;
-  palateScore: number;
-  finishScore: number;
-  balanceScore: number;
-  notesShort: string;
-  notesLong: string;
-  tags: string;
-  isNew?: boolean;
-  saveToCellar?: boolean;
-  saveToCellarLocation?: string;
+function ChipSelect({
+  options,
+  value,
+  onChange,
+}: {
+  options: string[];
+  value?: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((option) => (
+        <button
+          key={option}
+          onClick={() => onChange(option)}
+          className={cn(
+            "px-4 py-2 rounded-full text-sm font-medium transition-colors",
+            value === option
+              ? "bg-[#7C2D36] text-white"
+              : "border border-[#E5E1DB] text-[#1A1A1A] bg-white hover:border-[#7C2D36]"
+          )}
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export default function TastingDetailPage() {
@@ -119,6 +161,7 @@ export default function TastingDetailPage() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [isAddingEntry, setIsAddingEntry] = useState(false);
   const [sessionInfoExpanded, setSessionInfoExpanded] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const fetchTasting = useCallback(async () => {
     try {
@@ -234,16 +277,9 @@ export default function TastingDetailPage() {
   const handleExpandEntry = (entry: TastingEntry) => {
     setExpandedEntry({
       entryId: entry.id,
-      appearanceScore: entry.appearanceScore || 0,
-      noseScore: entry.noseScore || 0,
-      palateScore: entry.palateScore || 0,
-      finishScore: entry.finishScore || 0,
-      balanceScore: entry.balanceScore || 0,
-      notesShort: entry.notesShort || "",
+      totalScore: entry.totalScore || 0,
+      tastingNotes: entry.tastingNotes || {},
       notesLong: entry.notesLong || "",
-      tags: (entry.tags || []).join(", "),
-      saveToCellar: entry.saveToCellar || false,
-      saveToCellarLocation: entry.saveToCellarLocation || "",
     });
   };
 
@@ -251,17 +287,11 @@ export default function TastingDetailPage() {
     if (!expandedEntry) return;
 
     try {
+      setIsSaving(true);
       const payload = {
-        appearanceScore: expandedEntry.appearanceScore,
-        noseScore: expandedEntry.noseScore,
-        palateScore: expandedEntry.palateScore,
-        finishScore: expandedEntry.finishScore,
-        balanceScore: expandedEntry.balanceScore,
-        notesShort: expandedEntry.notesShort || undefined,
+        totalScore: expandedEntry.totalScore,
+        tastingNotes: expandedEntry.tastingNotes,
         notesLong: expandedEntry.notesLong || undefined,
-        tags: expandedEntry.tags
-          ? expandedEntry.tags.split(",").map((t) => t.trim())
-          : undefined,
       };
 
       await api.patch(`/tastings/${id}/entries/${expandedEntry.entryId}`, payload);
@@ -274,15 +304,9 @@ export default function TastingDetailPage() {
             e.id === expandedEntry.entryId
               ? {
                   ...e,
-                  appearanceScore: expandedEntry.appearanceScore,
-                  noseScore: expandedEntry.noseScore,
-                  palateScore: expandedEntry.palateScore,
-                  finishScore: expandedEntry.finishScore,
-                  balanceScore: expandedEntry.balanceScore,
-                  notesShort: expandedEntry.notesShort,
+                  totalScore: expandedEntry.totalScore,
+                  tastingNotes: expandedEntry.tastingNotes,
                   notesLong: expandedEntry.notesLong,
-                  tags: expandedEntry.tags ? expandedEntry.tags.split(",").map((t) => t.trim()) : [],
-                  saveToCellar: expandedEntry.saveToCellar,
                 }
               : e
           ),
@@ -293,6 +317,8 @@ export default function TastingDetailPage() {
     } catch (err) {
       console.error("Failed to save scores:", err);
       setError("Failed to save scores. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -336,8 +362,8 @@ export default function TastingDetailPage() {
   }
 
   const sortedEntries = [...(tasting.entries || [])].sort((a, b) => {
-    const scoreA = getScore(a);
-    const scoreB = getScore(b);
+    const scoreA = a.totalScore || 0;
+    const scoreB = b.totalScore || 0;
     return scoreB - scoreA;
   });
 
@@ -424,7 +450,8 @@ export default function TastingDetailPage() {
             ) : (
               <div className="space-y-3">
                 {(tasting.entries || []).map((entry) => {
-                  const score = getScore(entry);
+                  const score = entry.totalScore || 0;
+                  const qualityLevel = entry.tastingNotes?.qualityLevel;
                   const isExpanded = expandedEntry?.entryId === entry.id;
                   const name = entry.bottleName || entry.adHocName || "Unknown";
 
@@ -456,154 +483,506 @@ export default function TastingDetailPage() {
                               <p className="text-sm text-[#6B7280]">{entry.bottleVintage}</p>
                             )}
 
-                            {entry.notesShort && (
+                            {entry.notesLong && (
                               <p className="text-sm text-[#6B7280] mt-1 line-clamp-2">
-                                {entry.notesShort}
+                                {entry.notesLong}
                               </p>
                             )}
 
-                            {(entry.appearanceScore !== undefined || entry.noseScore !== undefined) && (
-                              <div className="mt-2 flex gap-1">
-                                {[
-                                  { label: "A", value: entry.appearanceScore || 0 },
-                                  { label: "N", value: entry.noseScore || 0 },
-                                  { label: "P", value: entry.palateScore || 0 },
-                                  { label: "F", value: entry.finishScore || 0 },
-                                  { label: "B", value: entry.balanceScore || 0 },
-                                ].map((cat) => (
-                                  <div
-                                    key={cat.label}
-                                    className="flex flex-col items-center gap-0.5"
-                                  >
-                                    <div className="text-xs font-semibold text-[#7C2D36]">
-                                      {cat.value}
-                                    </div>
-                                    <div className="text-xs text-[#6B7280]">{cat.label}</div>
-                                  </div>
-                                ))}
+                            {qualityLevel && (
+                              <div className="mt-2 flex gap-2 items-center">
+                                <Badge variant="score" className={getQualityColor(qualityLevel)}>
+                                  {getQualityLabel(qualityLevel)}
+                                </Badge>
                               </div>
                             )}
                           </div>
 
                           {score > 0 && (
-                            <div className={cn("flex-shrink-0 px-3 py-1 rounded font-semibold text-white", getScoreColor(score))}>
-                              {score}
+                            <div className="flex-shrink-0 text-right">
+                              <div className="text-2xl font-bold text-[#7C2D36]">
+                                {score}
+                              </div>
+                              <div className="text-xs text-[#6B7280]">/ 100</div>
                             </div>
                           )}
                         </div>
                       </Card>
 
                       {isExpanded && expandedEntry && (
-                        <Card className="mt-2 p-4 bg-[#FDFBF7] border-[#D4A847]">
-                          <div className="space-y-4">
-                            <div className="text-sm font-medium text-[#1A1A1A]">
-                              Total Score:{" "}
-                              <span className="text-xl font-bold text-[#7C2D36]">
-                                {expandedEntry.appearanceScore + expandedEntry.noseScore + expandedEntry.palateScore + expandedEntry.finishScore + expandedEntry.balanceScore}/100
-                              </span>
-                            </div>
-
-                            <div className="space-y-4 bg-white rounded-lg p-4">
-                              <ScoreInput
-                                label="Appearance"
-                                category="COLOR, CLARITY, VISCOSITY"
-                                value={expandedEntry.appearanceScore}
-                                onChange={(v) =>
-                                  setExpandedEntry((prev) =>
-                                    prev
-                                      ? {
-                                          ...prev,
-                                          appearanceScore: v,
-                                        }
-                                      : null
-                                  )
-                                }
-                              />
-
-                              <ScoreInput
-                                label="Nose"
-                                category="AROMA, INTENSITY, COMPLEXITY"
-                                value={expandedEntry.noseScore}
-                                onChange={(v) =>
-                                  setExpandedEntry((prev) =>
-                                    prev
-                                      ? {
-                                          ...prev,
-                                          noseScore: v,
-                                        }
-                                      : null
-                                  )
-                                }
-                              />
-
-                              <ScoreInput
-                                label="Palate"
-                                category="TASTE, WEIGHT, TEXTURE"
-                                value={expandedEntry.palateScore}
-                                onChange={(v) =>
-                                  setExpandedEntry((prev) =>
-                                    prev
-                                      ? {
-                                          ...prev,
-                                          palateScore: v,
-                                        }
-                                      : null
-                                  )
-                                }
-                              />
-
-                              <ScoreInput
-                                label="Finish"
-                                category="AFTERTASTE, LENGTH, CHARACTER"
-                                value={expandedEntry.finishScore}
-                                onChange={(v) =>
-                                  setExpandedEntry((prev) =>
-                                    prev
-                                      ? {
-                                          ...prev,
-                                          finishScore: v,
-                                        }
-                                      : null
-                                  )
-                                }
-                              />
-
-                              <ScoreInput
-                                label="Balance"
-                                category="OVERALL HARMONY"
-                                value={expandedEntry.balanceScore}
-                                onChange={(v) =>
-                                  setExpandedEntry((prev) =>
-                                    prev
-                                      ? {
-                                          ...prev,
-                                          balanceScore: v,
-                                        }
-                                      : null
-                                  )
-                                }
-                              />
-                            </div>
-
-                            <Input
-                              label="Short Notes"
-                              placeholder="Quick impressions..."
-                              value={expandedEntry.notesShort}
-                              onChange={(e) =>
-                                setExpandedEntry((prev) =>
-                                  prev
-                                    ? { ...prev, notesShort: e.target.value }
-                                    : null
-                                )
-                              }
-                            />
-
-                            <div className="flex flex-col gap-2">
+                        <Card className="mt-2 p-6 bg-white border-[#D4A847]">
+                          <div className="space-y-6">
+                            <div className="space-y-2">
                               <label className="text-sm font-medium text-[#1A1A1A]">
-                                Long Notes
+                                Overall Quality Score
+                              </label>
+                              <div className="flex items-center gap-4">
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="100"
+                                  value={expandedEntry.totalScore}
+                                  onChange={(e) =>
+                                    setExpandedEntry((prev) =>
+                                      prev
+                                        ? {
+                                            ...prev,
+                                            totalScore: parseInt(e.target.value, 10),
+                                          }
+                                        : null
+                                    )
+                                  }
+                                  className="flex-1 h-2 bg-[#E5E1DB] rounded-lg appearance-none cursor-pointer"
+                                  style={{
+                                    background: `linear-gradient(to right, #7C2D36 0%, #7C2D36 ${expandedEntry.totalScore}%, #E5E1DB ${expandedEntry.totalScore}%, #E5E1DB 100%)`,
+                                  }}
+                                />
+                                <div className="text-2xl font-bold text-[#7C2D36] w-12 text-right">
+                                  {expandedEntry.totalScore}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="border-t border-[#E5E1DB] pt-6">
+                              <h3 className="text-lg font-bold text-white bg-[#7C2D36] px-4 py-2 rounded-lg mb-4">
+                                APPEARANCE
+                              </h3>
+                              <div className="space-y-4">
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Clarity
+                                  </label>
+                                  <ChipSelect
+                                    options={["clear", "hazy"]}
+                                    value={expandedEntry.tastingNotes.clarity}
+                                    onChange={(v) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                clarity: v,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Intensity
+                                  </label>
+                                  <ChipSelect
+                                    options={["pale", "medium", "deep"]}
+                                    value={expandedEntry.tastingNotes.intensityAppearance}
+                                    onChange={(v) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                intensityAppearance: v,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Colour
+                                  </label>
+                                  <ChipSelect
+                                    options={[
+                                      "lemon-green",
+                                      "lemon",
+                                      "gold",
+                                      "amber",
+                                      "brown",
+                                      "pink",
+                                      "salmon",
+                                      "orange",
+                                      "purple",
+                                      "ruby",
+                                      "garnet",
+                                      "tawny",
+                                    ]}
+                                    value={expandedEntry.tastingNotes.colour}
+                                    onChange={(v) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                colour: v,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="border-t border-[#E5E1DB] pt-6">
+                              <h3 className="text-lg font-bold text-white bg-[#7C2D36] px-4 py-2 rounded-lg mb-4">
+                                NOSE
+                              </h3>
+                              <div className="space-y-4">
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Condition
+                                  </label>
+                                  <ChipSelect
+                                    options={["clean", "unclean"]}
+                                    value={expandedEntry.tastingNotes.condition}
+                                    onChange={(v) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                condition: v,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Intensity
+                                  </label>
+                                  <ChipSelect
+                                    options={["light", "medium(-)", "medium", "medium(+)", "pronounced"]}
+                                    value={expandedEntry.tastingNotes.intensityNose}
+                                    onChange={(v) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                intensityNose: v,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Aroma Characteristics
+                                  </label>
+                                  <textarea
+                                    placeholder="e.g. citrus, oak, vanilla, floral"
+                                    value={expandedEntry.tastingNotes.aromaCharacteristics || ""}
+                                    onChange={(e) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                aromaCharacteristics: e.target.value,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                    className="flex min-h-16 w-full rounded-md border border-[#E5E1DB] bg-white px-3 py-2 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-colors focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36] focus:ring-offset-0"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Development
+                                  </label>
+                                  <ChipSelect
+                                    options={["youthful", "developing", "fully developed", "tired"]}
+                                    value={expandedEntry.tastingNotes.development}
+                                    onChange={(v) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                development: v,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="border-t border-[#E5E1DB] pt-6">
+                              <h3 className="text-lg font-bold text-white bg-[#7C2D36] px-4 py-2 rounded-lg mb-4">
+                                PALATE
+                              </h3>
+                              <div className="space-y-4">
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Sweetness
+                                  </label>
+                                  <ChipSelect
+                                    options={["dry", "off-dry", "medium-dry", "medium-sweet", "sweet", "luscious"]}
+                                    value={expandedEntry.tastingNotes.sweetness}
+                                    onChange={(v) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                sweetness: v,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Acidity
+                                  </label>
+                                  <ChipSelect
+                                    options={["low", "medium(-)", "medium", "medium(+)", "high"]}
+                                    value={expandedEntry.tastingNotes.acidity}
+                                    onChange={(v) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                acidity: v,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Tannin
+                                  </label>
+                                  <ChipSelect
+                                    options={["low", "medium(-)", "medium", "medium(+)", "high"]}
+                                    value={expandedEntry.tastingNotes.tannin}
+                                    onChange={(v) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                tannin: v,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Alcohol
+                                  </label>
+                                  <ChipSelect
+                                    options={["low", "medium", "high"]}
+                                    value={expandedEntry.tastingNotes.alcohol}
+                                    onChange={(v) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                alcohol: v,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Body
+                                  </label>
+                                  <ChipSelect
+                                    options={["light", "medium(-)", "medium", "medium(+)", "full"]}
+                                    value={expandedEntry.tastingNotes.body}
+                                    onChange={(v) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                body: v,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Flavour Intensity
+                                  </label>
+                                  <ChipSelect
+                                    options={["light", "medium(-)", "medium", "medium(+)", "pronounced"]}
+                                    value={expandedEntry.tastingNotes.flavourIntensity}
+                                    onChange={(v) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                flavourIntensity: v,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Flavour Characteristics
+                                  </label>
+                                  <textarea
+                                    placeholder="e.g. berry, chocolate, spice, mineral"
+                                    value={expandedEntry.tastingNotes.flavourCharacteristics || ""}
+                                    onChange={(e) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                flavourCharacteristics: e.target.value,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                    className="flex min-h-16 w-full rounded-md border border-[#E5E1DB] bg-white px-3 py-2 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-colors focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36] focus:ring-offset-0"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Finish
+                                  </label>
+                                  <ChipSelect
+                                    options={["short", "medium(-)", "medium", "medium(+)", "long"]}
+                                    value={expandedEntry.tastingNotes.finish}
+                                    onChange={(v) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                finish: v,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="border-t border-[#E5E1DB] pt-6">
+                              <h3 className="text-lg font-bold text-white bg-[#7C2D36] px-4 py-2 rounded-lg mb-4">
+                                CONCLUSIONS
+                              </h3>
+                              <div className="space-y-4">
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Quality Level
+                                  </label>
+                                  <ChipSelect
+                                    options={["faulty", "poor", "acceptable", "good", "very good", "outstanding"]}
+                                    value={expandedEntry.tastingNotes.qualityLevel}
+                                    onChange={(v) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                qualityLevel: v,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                    Readiness
+                                  </label>
+                                  <ChipSelect
+                                    options={["too young", "can drink now but has potential", "drink now", "too old"]}
+                                    value={expandedEntry.tastingNotes.readiness}
+                                    onChange={(v) =>
+                                      setExpandedEntry((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              tastingNotes: {
+                                                ...prev.tastingNotes,
+                                                readiness: v,
+                                              },
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="border-t border-[#E5E1DB] pt-6">
+                              <label className="text-sm font-medium text-[#1A1A1A] block mb-2">
+                                Tasting Notes
                               </label>
                               <textarea
-                                placeholder="Detailed tasting notes..."
+                                placeholder="Detailed explanation of your score and overall impressions..."
                                 value={expandedEntry.notesLong}
                                 onChange={(e) =>
                                   setExpandedEntry((prev) =>
@@ -616,27 +995,19 @@ export default function TastingDetailPage() {
                               />
                             </div>
 
-                            <Input
-                              label="Tags"
-                              placeholder="Comma-separated tags..."
-                              value={expandedEntry.tags}
-                              onChange={(e) =>
-                                setExpandedEntry((prev) =>
-                                  prev ? { ...prev, tags: e.target.value } : null
-                                )
-                              }
-                            />
-
                             <div className="flex gap-3 pt-4">
                               <Button
                                 onClick={handleSaveScores}
+                                disabled={isSaving}
+                                isLoading={isSaving}
                                 className="flex-1"
                               >
-                                Save Scores
+                                Save Tasting
                               </Button>
                               <Button
                                 variant="outline"
                                 onClick={() => setExpandedEntry(null)}
+                                disabled={isSaving}
                                 className="flex-1"
                               >
                                 Cancel
@@ -790,28 +1161,29 @@ export default function TastingDetailPage() {
                           Wine
                         </th>
                         <th className="text-center p-3 font-semibold text-[#1A1A1A]">
+                          Quality Level
+                        </th>
+                        <th className="text-center p-3 font-semibold text-[#1A1A1A]">
                           Score
                         </th>
                         <th className="text-center p-3 font-semibold text-[#6B7280]">
-                          A
+                          Body
                         </th>
                         <th className="text-center p-3 font-semibold text-[#6B7280]">
-                          N
+                          Finish
                         </th>
                         <th className="text-center p-3 font-semibold text-[#6B7280]">
-                          P
+                          Acidity
                         </th>
                         <th className="text-center p-3 font-semibold text-[#6B7280]">
-                          F
-                        </th>
-                        <th className="text-center p-3 font-semibold text-[#6B7280]">
-                          B
+                          Sweetness
                         </th>
                       </tr>
                     </thead>
                     <tbody>
                       {sortedEntries.map((entry, index) => {
-                        const score = getScore(entry);
+                        const score = entry.totalScore || 0;
+                        const qualityLevel = entry.tastingNotes?.qualityLevel;
                         const name = entry.bottleName || entry.adHocName || "Unknown";
                         return (
                           <tr
@@ -825,22 +1197,28 @@ export default function TastingDetailPage() {
                               {name}
                             </td>
                             <td className="p-3 text-center">
-                              <Badge variant="score">{score}</Badge>
+                              {qualityLevel ? (
+                                <Badge variant="score" className={getQualityColor(qualityLevel)}>
+                                  {getQualityLabel(qualityLevel)}
+                                </Badge>
+                              ) : (
+                                <span className="text-[#6B7280]">-</span>
+                              )}
+                            </td>
+                            <td className="p-3 text-center font-bold text-[#7C2D36]">
+                              {score || "-"}
                             </td>
                             <td className="p-3 text-center text-[#6B7280]">
-                              {entry.appearanceScore || 0}
+                              {entry.tastingNotes?.body || "-"}
                             </td>
                             <td className="p-3 text-center text-[#6B7280]">
-                              {entry.noseScore || 0}
+                              {entry.tastingNotes?.finish || "-"}
                             </td>
                             <td className="p-3 text-center text-[#6B7280]">
-                              {entry.palateScore || 0}
+                              {entry.tastingNotes?.acidity || "-"}
                             </td>
                             <td className="p-3 text-center text-[#6B7280]">
-                              {entry.finishScore || 0}
-                            </td>
-                            <td className="p-3 text-center text-[#6B7280]">
-                              {entry.balanceScore || 0}
+                              {entry.tastingNotes?.sweetness || "-"}
                             </td>
                           </tr>
                         );
