@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Plus, Download, ChevronDown, Wine, X } from "lucide-react";
+import { Plus, Download, ChevronDown, Wine, X, Camera } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,7 @@ interface TastingEntry {
   bottleId?: string;
   adHocName?: string;
   adHocPhotoUrl?: string;
+  entryPhotoUrl?: string;
   totalScore?: number;
   tastingNotes?: Record<string, string>;
   notesShort?: string;
@@ -165,6 +166,9 @@ export default function TastingDetailPage() {
   const [sessionSummary, setSessionSummary] = useState("");
   const [isSavingSummary, setIsSavingSummary] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [entryPhoto, setEntryPhoto] = useState<File | null>(null);
+  const [entryPhotoPreview, setEntryPhotoPreview] = useState<string | null>(null);
+  const entryPhotoInputRef = useRef<HTMLInputElement>(null);
 
   const fetchTasting = useCallback(async () => {
     try {
@@ -285,6 +289,8 @@ export default function TastingDetailPage() {
       tastingNotes: entry.tastingNotes || {},
       notesLong: entry.notesLong || "",
     });
+    setEntryPhoto(null);
+    setEntryPhotoPreview(entry.entryPhotoUrl || null);
   };
 
   const handleSaveScores = async () => {
@@ -292,11 +298,22 @@ export default function TastingDetailPage() {
 
     try {
       setIsSaving(true);
-      const payload = {
+
+      // Upload photo if selected
+      let photoUrl: string | undefined;
+      if (entryPhoto) {
+        const uploadData = await api.uploadFile("/uploads", entryPhoto);
+        photoUrl = uploadData.url;
+      }
+
+      const payload: Record<string, unknown> = {
         totalScore: expandedEntry.totalScore,
         tastingNotes: expandedEntry.tastingNotes,
         notesLong: expandedEntry.notesLong || undefined,
       };
+      if (photoUrl) {
+        payload.entryPhotoUrl = photoUrl;
+      }
 
       await api.patch(`/tastings/${id}/entries/${expandedEntry.entryId}`, payload);
 
@@ -311,6 +328,7 @@ export default function TastingDetailPage() {
                   totalScore: expandedEntry.totalScore,
                   tastingNotes: expandedEntry.tastingNotes,
                   notesLong: expandedEntry.notesLong,
+                  entryPhotoUrl: photoUrl || e.entryPhotoUrl,
                 }
               : e
           ),
@@ -318,6 +336,8 @@ export default function TastingDetailPage() {
       });
 
       setExpandedEntry(null);
+      setEntryPhoto(null);
+      setEntryPhotoPreview(null);
     } catch (err) {
       console.error("Failed to save scores:", err);
       setError("Failed to save scores. Please try again.");
@@ -501,9 +521,9 @@ export default function TastingDetailPage() {
                       >
                         <div className="flex gap-4 items-start">
                           <div className="flex-shrink-0">
-                            {entry.adHocPhotoUrl || entry.bottlePhotoUrl ? (
+                            {entry.entryPhotoUrl || entry.adHocPhotoUrl || entry.bottlePhotoUrl ? (
                               <img
-                                src={entry.adHocPhotoUrl || entry.bottlePhotoUrl}
+                                src={entry.entryPhotoUrl || entry.adHocPhotoUrl || entry.bottlePhotoUrl}
                                 alt={name}
                                 className="w-16 h-20 rounded object-cover bg-[#F5F1EB]"
                               />
@@ -550,6 +570,55 @@ export default function TastingDetailPage() {
                       {isExpanded && expandedEntry && (
                         <Card className="mt-2 p-6 bg-white border-[#D4A847]">
                           <div className="space-y-6">
+                            {/* Optional Photo */}
+                            <div>
+                              <input
+                                ref={entryPhotoInputRef}
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    setEntryPhoto(file);
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => setEntryPhotoPreview(reader.result as string);
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                                className="hidden"
+                              />
+                              {entryPhotoPreview ? (
+                                <div className="relative inline-block">
+                                  <img
+                                    src={entryPhotoPreview}
+                                    alt="Tasting photo"
+                                    className="w-full max-h-48 rounded-xl object-cover border border-[#E5E1DB]"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEntryPhoto(null);
+                                      setEntryPhotoPreview(null);
+                                      if (entryPhotoInputRef.current) entryPhotoInputRef.current.value = "";
+                                    }}
+                                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => entryPhotoInputRef.current?.click()}
+                                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-[#E5E1DB] text-[#6B7280] hover:border-[#7C2D36] hover:text-[#7C2D36] transition-colors"
+                                >
+                                  <Camera className="w-4 h-4" />
+                                  <span className="text-sm font-medium">Add Photo (optional)</span>
+                                </button>
+                              )}
+                            </div>
+
                             <div className="space-y-2">
                               <label className="text-sm font-medium text-[#1A1A1A]">
                                 Overall Quality Score

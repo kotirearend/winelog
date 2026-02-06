@@ -90,6 +90,9 @@ export async function PATCH(
     if (notesLong !== undefined) updateData.notesLong = notesLong;
     if (tags !== undefined) updateData.tags = tags;
 
+    // Entry photo (optional tasting photo)
+    if (body.entryPhotoUrl !== undefined) updateData.entryPhotoUrl = body.entryPhotoUrl;
+
     const updatedEntry = await db
       .update(tastingEntries)
       .set(updateData)

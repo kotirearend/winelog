@@ -130,6 +130,11 @@ export async function GET() {
       CREATE INDEX IF NOT EXISTS idx_drink_logs_user ON drink_logs(user_id);
     `);
 
+    // Migration: add entry_photo_url to tasting_entries
+    await sql.unsafe(`
+      ALTER TABLE tasting_entries ADD COLUMN IF NOT EXISTS entry_photo_url TEXT;
+    `);
+
     await sql.end();
 
     return NextResponse.json({

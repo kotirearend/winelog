@@ -46,6 +46,7 @@ export async function GET(
         balanceScore: tastingEntries.balanceScore,
         totalScore: tastingEntries.totalScore,
         tastingNotes: tastingEntries.tastingNotes,
+        entryPhotoUrl: tastingEntries.entryPhotoUrl,
         notesShort: tastingEntries.notesShort,
         notesLong: tastingEntries.notesLong,
         tags: tastingEntries.tags,
