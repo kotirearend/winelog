@@ -134,20 +134,20 @@ export default function AddBottlePage() {
         localStorage.setItem("lastUsedLocationId", finalLocationId);
       }
 
-      const bottleData = {
+      const bottleData: Record<string, unknown> = {
         name: name.trim(),
-        producer: undefined,
-        vintage: vintage ? parseInt(vintage) : undefined,
-        photoUrl: photoUrl || undefined,
-        quantity: parseInt(quantity) || 1,
         locationId: finalLocationId,
-        price: price ? parseFloat(price) : undefined,
-        currency: currency || "USD",
-        subLocation: subLocation || undefined,
-        purchaseDate: purchaseDate || undefined,
-        purchaseSourceType: purchaseSource || undefined,
-        purchaseSourceName: purchaseSourceName || undefined,
+        quantity: parseInt(quantity) || 1,
       };
+
+      if (photoUrl) bottleData.photoUrl = photoUrl;
+      if (vintage) bottleData.vintage = parseInt(vintage);
+      if (purchaseDate) bottleData.purchaseDate = purchaseDate;
+      if (purchaseSource) bottleData.purchaseSourceType = purchaseSource.toUpperCase();
+      if (purchaseSourceName) bottleData.purchaseSourceName = purchaseSourceName;
+      if (price) bottleData.priceAmount = parseFloat(price);
+      if (currency) bottleData.priceCurrency = currency;
+      if (subLocation) bottleData.subLocationText = subLocation;
 
       const response = await api.post("/bottles", bottleData);
 

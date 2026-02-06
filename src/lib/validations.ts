@@ -29,7 +29,7 @@ export const bottleCreateSchema = z.object({
   name: z.string().min(1, 'Bottle name is required'),
   locationId: z.string().uuid('Invalid location ID'),
   vintage: z.number().int().optional(),
-  purchaseDate: z.string().date().optional(),
+  purchaseDate: z.string().optional(),
   purchaseSourceType: z
     .enum(['RESTAURANT', 'SHOP', 'OTHER'])
     .optional(),
@@ -48,7 +48,7 @@ export const bottleCreateSchema = z.object({
     .int()
     .min(1, 'Quantity must be at least 1')
     .default(1),
-  photoUrl: z.string().url('Invalid URL').optional(),
+  photoUrl: z.string().optional(),
 });
 
 export const bottleUpdateSchema = bottleCreateSchema.partial().extend({
@@ -74,7 +74,7 @@ export const tastingEntryCreateSchema = z
   .object({
     bottleId: z.string().uuid('Invalid bottle ID').optional(),
     adHocName: z.string().optional(),
-    adHocPhotoUrl: z.string().url('Invalid URL').optional(),
+    adHocPhotoUrl: z.string().optional(),
     saveToCellar: z.boolean().optional().default(false),
   })
   .refine(
