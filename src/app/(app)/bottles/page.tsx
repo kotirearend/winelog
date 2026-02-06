@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Wine } from "lucide-react";
+import { Plus, Wine, Beer } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { SearchInput } from "@/components/ui/search-input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Loading } from "@/components/ui/loading";
+import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,8 @@ interface Bottle {
 
 export default function BottlesPage() {
   const router = useRouter();
+  const { beverageType } = useAuth();
+  const isBeer = beverageType === "beer";
   const [bottles, setBottles] = useState<Bottle[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -113,7 +116,7 @@ export default function BottlesPage() {
   return (
     <div className="min-h-screen bg-cream">
       <PageHeader
-        title="My Cellar"
+        title={isBeer ? "My Collection" : "My Cellar"}
         variant="wine"
         action={
           <Button
@@ -194,11 +197,11 @@ export default function BottlesPage() {
 
         {bottles.length === 0 ? (
           <EmptyState
-            icon={<Wine className="w-12 h-12 text-wine-800" />}
-            title="No bottles in your cellar yet"
-            description="Add your first bottle to get started tracking your wine collection."
+            icon={isBeer ? <Beer className="w-12 h-12 text-amber-700" /> : <Wine className="w-12 h-12 text-wine-800" />}
+            title={isBeer ? "No beers in your collection yet" : "No bottles in your cellar yet"}
+            description={isBeer ? "Add your first beer to get started tracking your beer collection." : "Add your first bottle to get started tracking your wine collection."}
             action={{
-              label: "Add Bottle",
+              label: isBeer ? "Add Beer" : "Add Bottle",
               onClick: handleAddButton,
             }}
           />

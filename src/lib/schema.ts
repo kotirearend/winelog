@@ -9,6 +9,7 @@ export const users = pgTable('users', {
   passwordHash: text('password_hash').notNull(),
   name: varchar('name', { length: 255 }).notNull(),
   defaultCurrency: char('default_currency', { length: 3 }).default('GBP'),
+  beverageType: varchar('beverage_type', { length: 10 }).default('wine').notNull(),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });

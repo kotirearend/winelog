@@ -95,8 +95,9 @@ export const tastingEntryCreateSchema = z
 export const tastingEntryScoreSchema = z.object({
   // Overall quality score (0-100)
   totalScore: z.number().int().min(0).max(100).optional(),
-  // Structured WSET-style tasting notes stored as JSON
+  // Structured tasting notes stored as JSON (wine WSET + beer BJCP fields)
   tastingNotes: z.object({
+    // === WINE (WSET SAT) ===
     // Appearance
     clarity: z.string().optional(),
     intensityAppearance: z.string().optional(),
@@ -119,6 +120,31 @@ export const tastingEntryScoreSchema = z.object({
     // Conclusions
     qualityLevel: z.string().optional(),
     readiness: z.string().optional(),
+    // === BEER (BJCP-inspired) ===
+    // Appearance
+    beerColour: z.string().optional(),
+    beerClarity: z.string().optional(),
+    headRetention: z.string().optional(),
+    headColour: z.string().optional(),
+    // Aroma
+    maltAroma: z.string().optional(),
+    hopAroma: z.string().optional(),
+    fermentationAroma: z.string().optional(),
+    otherAroma: z.string().optional(),
+    // Flavour
+    maltFlavour: z.string().optional(),
+    hopFlavour: z.string().optional(),
+    bitterness: z.string().optional(),
+    fermentationFlavour: z.string().optional(),
+    balance: z.string().optional(),
+    finishAftertaste: z.string().optional(),
+    // Mouthfeel
+    beerBody: z.string().optional(),
+    carbonation: z.string().optional(),
+    warmth: z.string().optional(),
+    creaminess: z.string().optional(),
+    // Overall
+    overallImpression: z.string().optional(),
   }).optional(),
   // Free text notes
   notesShort: z.string().max(500, 'Short notes must be 500 characters or less').optional(),

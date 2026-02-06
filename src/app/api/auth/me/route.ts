@@ -14,6 +14,7 @@ export async function GET(request: Request) {
         email: users.email,
         name: users.name,
         defaultCurrency: users.defaultCurrency,
+        beverageType: users.beverageType,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -54,6 +55,7 @@ export async function PATCH(request: Request) {
     if (body.name !== undefined) updateData.name = body.name;
     if (body.defaultCurrency !== undefined) updateData.defaultCurrency = body.defaultCurrency;
     if (body.currency !== undefined) updateData.defaultCurrency = body.currency;
+    if (body.beverageType !== undefined) updateData.beverageType = body.beverageType;
 
     const updated = await db
       .update(users)
@@ -64,6 +66,7 @@ export async function PATCH(request: Request) {
         email: users.email,
         name: users.name,
         defaultCurrency: users.defaultCurrency,
+        beverageType: users.beverageType,
         createdAt: users.createdAt,
       });
 

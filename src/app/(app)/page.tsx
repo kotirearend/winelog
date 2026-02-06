@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Loading } from "@/components/ui/loading";
-import { Plus, Wine, ClipboardList, ChevronRight } from "lucide-react";
+import { Plus, Wine, Beer, ClipboardList, ChevronRight } from "lucide-react";
 
 interface Bottle {
   id: string;
@@ -34,7 +34,8 @@ interface Tasting {
 }
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, beverageType } = useAuth();
+  const isBeer = beverageType === "beer";
   const [allBottles, setAllBottles] = useState<Bottle[]>([]);
   const [tastings, setTastings] = useState<Tasting[]>([]);
   const [bottlesLoading, setBottlesLoading] = useState(true);
@@ -99,7 +100,7 @@ export default function HomePage() {
             <h1 className="text-3xl font-bold tracking-tight">
               Welcome back, {user?.name?.split(" ")[0]}
             </h1>
-            <p className="text-white/60 text-sm mt-1">Your wine collection at a glance</p>
+            <p className="text-white/60 text-sm mt-1">{isBeer ? "Your beer collection at a glance" : "Your wine collection at a glance"}</p>
           </div>
 
           {/* Stats */}
@@ -108,7 +109,7 @@ export default function HomePage() {
               <div className="text-3xl font-bold text-white">
                 {bottlesLoading ? "—" : totalBottlesInStock}
               </div>
-              <div className="text-white/60 text-xs mt-0.5">Bottles in Cellar</div>
+              <div className="text-white/60 text-xs mt-0.5">{isBeer ? "Beers in Collection" : "Bottles in Cellar"}</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 text-center">
               <div className="text-3xl font-bold text-white">
@@ -122,7 +123,7 @@ export default function HomePage() {
           <Link href="/bottles/new" className="block">
             <Button variant="gold" className="w-full h-12 text-base font-semibold rounded-xl flex items-center justify-center gap-2 shadow-lg">
               <Plus className="w-5 h-5" />
-              Quick Add Bottle
+              {isBeer ? "Quick Add Beer" : "Quick Add Bottle"}
             </Button>
           </Link>
         </div>
@@ -135,8 +136,8 @@ export default function HomePage() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold text-[#1A1A1A] flex items-center gap-2">
-              <Wine className="w-5 h-5 text-[#7C2D36]" />
-              Recent Bottles
+              {isBeer ? <Beer className="w-5 h-5 text-[#B45309]" /> : <Wine className="w-5 h-5 text-[#7C2D36]" />}
+              {isBeer ? "Recent Beers" : "Recent Bottles"}
             </h2>
             <Link href="/bottles" className="text-[#D4A847] text-sm font-semibold">
               View all
@@ -147,10 +148,10 @@ export default function HomePage() {
             <Loading />
           ) : recentBottles.length === 0 ? (
             <EmptyState
-              icon={<Wine className="w-10 h-10" />}
-              title="No bottles yet"
-              description="Add your first bottle to start tracking"
-              action={{ label: "Add Bottle", onClick: () => (window.location.href = "/bottles/new") }}
+              icon={isBeer ? <Beer className="w-10 h-10" /> : <Wine className="w-10 h-10" />}
+              title={isBeer ? "No beers yet" : "No bottles yet"}
+              description={isBeer ? "Add your first beer to start tracking" : "Add your first bottle to start tracking"}
+              action={{ label: isBeer ? "Add Beer" : "Add Bottle", onClick: () => (window.location.href = "/bottles/new") }}
             />
           ) : (
             <div className="space-y-2">
@@ -221,7 +222,7 @@ export default function HomePage() {
             <EmptyState
               icon={<ClipboardList className="w-10 h-10" />}
               title="No tastings yet"
-              description="Create a tasting session to start scoring wines"
+              description={isBeer ? "Create a tasting session to start scoring beers" : "Create a tasting session to start scoring wines"}
               action={{ label: "Start Tasting", onClick: () => (window.location.href = "/tastings/new") }}
             />
           ) : (

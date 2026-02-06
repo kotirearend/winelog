@@ -135,6 +135,11 @@ export async function GET() {
       ALTER TABLE tasting_entries ADD COLUMN IF NOT EXISTS entry_photo_url TEXT;
     `);
 
+    // Migration: add beverage_type to users
+    await sql.unsafe(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS beverage_type VARCHAR(10) NOT NULL DEFAULT 'wine';
+    `);
+
     await sql.end();
 
     return NextResponse.json({

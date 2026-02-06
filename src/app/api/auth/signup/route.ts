@@ -49,6 +49,7 @@ export async function POST(request: Request) {
         email: users.email,
         name: users.name,
         defaultCurrency: users.defaultCurrency,
+        beverageType: users.beverageType,
         createdAt: users.createdAt,
       });
 

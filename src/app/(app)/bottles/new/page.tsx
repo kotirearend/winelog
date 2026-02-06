@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PhotoCapture } from "@/components/ui/photo-capture";
+import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -23,8 +24,20 @@ const COMMON_GRAPES = [
   "Trebbiano", "Garganega", "Torrontés",
 ];
 
+const COMMON_BEER_STYLES = [
+  "IPA", "DIPA", "NEIPA", "Pale Ale", "APA", "Lager", "Pilsner",
+  "Stout", "Imperial Stout", "Porter", "Wheat Beer", "Hefeweizen",
+  "Witbier", "Saison", "Belgian Blonde", "Belgian Dubbel", "Belgian Tripel",
+  "Sour", "Gose", "Berliner Weisse", "Lambic", "Gueuze",
+  "Amber Ale", "Red Ale", "Brown Ale", "Scottish Ale", "ESB",
+  "Barleywine", "Bock", "Doppelbock", "Märzen", "Kölsch",
+  "Cream Ale", "Mild", "Bitter", "Golden Ale",
+];
+
 export default function AddBottlePage() {
   const router = useRouter();
+  const { beverageType } = useAuth();
+  const isBeer = beverageType === "beer";
   const [isLoading, setIsLoading] = useState(false);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
   const [defaultCurrency, setDefaultCurrency] = useState("GBP");
@@ -97,9 +110,10 @@ export default function AddBottlePage() {
     producerInputRef.current?.focus();
   }, []);
 
-  // Grape suggestions filtered by input
+  // Grape/style suggestions filtered by input
+  const suggestionList = isBeer ? COMMON_BEER_STYLES : COMMON_GRAPES;
   const filteredGrapes = grapeInput.trim()
-    ? COMMON_GRAPES.filter(
+    ? suggestionList.filter(
         (g) =>
           g.toLowerCase().includes(grapeInput.toLowerCase()) &&
           !grapes.includes(g)
@@ -137,7 +151,7 @@ export default function AddBottlePage() {
     const newErrors: Record<string, string> = {};
 
     if (!name.trim()) {
-      newErrors.name = "Wine name is required";
+      newErrors.name = isBeer ? "Beer name is required" : "Wine name is required";
     }
 
     setErrors(newErrors);
@@ -213,7 +227,7 @@ export default function AddBottlePage() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] pb-40 sm:pb-0">
-      <PageHeader title="Add Wine" showBack variant="wine" />
+      <PageHeader title={isBeer ? "Add Beer" : "Add Wine"} showBack variant="wine" />
 
       <form onSubmit={handleSubmit} className="p-4 sm:p-6 max-w-2xl mx-auto space-y-6">
         {/* Photo Capture */}
@@ -228,8 +242,8 @@ export default function AddBottlePage() {
         <div>
           <Input
             ref={producerInputRef}
-            label="Wine Maker"
-            placeholder="e.g., Château Margaux"
+            label={isBeer ? "Brewery" : "Wine Maker"}
+            placeholder={isBeer ? "e.g., BrewDog" : "e.g., Château Margaux"}
             value={producer}
             onChange={(e) => setProducer(e.target.value)}
             autoFocus
@@ -239,9 +253,9 @@ export default function AddBottlePage() {
         {/* Vintage */}
         <div>
           <Input
-            label="Vintage"
+            label={isBeer ? "Year / Batch" : "Vintage"}
             type="number"
-            placeholder="e.g., 2018"
+            placeholder={isBeer ? "e.g., 2024" : "e.g., 2018"}
             value={vintage}
             onChange={(e) => setVintage(e.target.value)}
             min="1900"
@@ -252,8 +266,8 @@ export default function AddBottlePage() {
         {/* Wine Name */}
         <div>
           <Input
-            label="Wine Name"
-            placeholder="e.g., Grand Vin"
+            label={isBeer ? "Beer Name" : "Wine Name"}
+            placeholder={isBeer ? "e.g., Punk IPA" : "e.g., Grand Vin"}
             value={name}
             onChange={(e) => setName(e.target.value)}
             error={errors.name}
@@ -264,7 +278,7 @@ export default function AddBottlePage() {
         {/* Grapes - Tag Chips */}
         <div className="flex flex-col gap-2">
           <label className="text-sm font-semibold text-[#1A1A1A]">
-            Grapes
+            {isBeer ? "Style" : "Grapes"}
           </label>
 
           {/* Selected grape chips */}
@@ -291,7 +305,7 @@ export default function AddBottlePage() {
             <input
               ref={grapeInputRef}
               type="text"
-              placeholder={grapes.length > 0 ? "Add another grape..." : "e.g., Cabernet Sauvignon"}
+              placeholder={grapes.length > 0 ? (isBeer ? "Add another style..." : "Add another grape...") : (isBeer ? "e.g., IPA" : "e.g., Cabernet Sauvignon")}
               value={grapeInput}
               onChange={(e) => {
                 setGrapeInput(e.target.value);
@@ -524,7 +538,7 @@ export default function AddBottlePage() {
             className="w-full rounded-xl"
             size="lg"
           >
-            Save to Cellar
+            {isBeer ? "Save to Collection" : "Save to Cellar"}
           </Button>
         </div>
       </form>

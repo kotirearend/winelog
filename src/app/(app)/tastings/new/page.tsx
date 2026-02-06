@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api-client";
 
 interface NewTastingForm {
@@ -18,6 +19,8 @@ interface NewTastingForm {
 
 export default function NewTastingPage() {
   const router = useRouter();
+  const { beverageType } = useAuth();
+  const isBeer = beverageType === "beer";
   const [formData, setFormData] = useState<NewTastingForm>(() => {
     const now = new Date();
     const dateString = now.toISOString().split("T")[0];
@@ -120,7 +123,7 @@ export default function NewTastingPage() {
             <Input
               label="Tasting Name"
               name="name"
-              placeholder="e.g. Pinot Noir Lineup"
+              placeholder={isBeer ? "e.g. IPA Showdown" : "e.g. Pinot Noir Lineup"}
               value={formData.name}
               onChange={handleChange}
               error={errors.name}
@@ -158,7 +161,7 @@ export default function NewTastingPage() {
             <Input
               label="Venue"
               name="venue"
-              placeholder="e.g. Downtown Wine Bar"
+              placeholder={isBeer ? "e.g. The Craft Beer Pub" : "e.g. Downtown Wine Bar"}
               value={formData.venue}
               onChange={handleChange}
             />

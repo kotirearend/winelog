@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Wine, Sparkles } from "lucide-react";
+import { Plus, Wine, Beer, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Loading } from "@/components/ui/loading";
+import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api-client";
 
 interface TastingEntry {
@@ -47,6 +48,8 @@ function getTopScore(entries: TastingEntry[]): number | null {
 
 export default function TastingsPage() {
   const router = useRouter();
+  const { beverageType } = useAuth();
+  const isBeer = beverageType === "beer";
   const [tastings, setTastings] = useState<TastingSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -116,9 +119,9 @@ export default function TastingsPage() {
 
         {tastings.length === 0 ? (
           <EmptyState
-            icon={<Wine className="w-12 h-12 text-wine-800" />}
+            icon={isBeer ? <Beer className="w-12 h-12 text-amber-700" /> : <Wine className="w-12 h-12 text-wine-800" />}
             title="No tastings yet"
-            description="Start your first tasting session to begin comparing wines."
+            description={isBeer ? "Start your first tasting session to begin comparing beers." : "Start your first tasting session to begin comparing wines."}
             action={{
               label: "New Tasting",
               onClick: handleNewTasting,

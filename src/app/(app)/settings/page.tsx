@@ -2,13 +2,15 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Edit2, Check, X, LogOut } from "lucide-react";
+import { Plus, Edit2, Check, X, LogOut, Wine, Beer } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
+import { useAuth, BeverageType } from "@/lib/auth-context";
 import { api } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "AUD", "NZD", "ZAR", "CHF", "JPY", "CAD"];
 
@@ -17,20 +19,22 @@ interface Location {
   name: string;
 }
 
-interface User {
+interface UserData {
   email: string;
-  currency?: string;
+  defaultCurrency?: string;
+  beverageType?: string;
 }
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const { beverageType, setBeverageType } = useAuth();
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Currency state
-  const [selectedCurrency, setSelectedCurrency] = useState("USD");
+  const [selectedCurrency, setSelectedCurrency] = useState("GBP");
 
   // Locations state
   const [isAddingLocation, setIsAddingLocation] = useState(false);
@@ -40,15 +44,17 @@ export default function SettingsPage() {
 
   const [isSaving, setIsSaving] = useState(false);
 
+  const isBeer = beverageType === "beer";
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
 
         // Fetch user
-        const userData = await api.get("/auth/me");
-        setUser(userData);
-        setSelectedCurrency(userData.defaultCurrency || "GBP");
+        const data = await api.get("/auth/me");
+        setUserData(data);
+        setSelectedCurrency(data.defaultCurrency || "GBP");
 
         // Fetch locations
         const locationsData = await api.get("/locations");
@@ -69,11 +75,9 @@ export default function SettingsPage() {
   const handleCurrencyChange = async (currency: string) => {
     try {
       setSelectedCurrency(currency);
-      // Try to save to API, fallback to localStorage if not available
       try {
         await api.patch("/auth/me", { currency });
       } catch (err) {
-        // API endpoint may not exist, fall back to localStorage
         if (typeof window !== "undefined") {
           localStorage.setItem("winelog_currency", currency);
         }
@@ -82,6 +86,10 @@ export default function SettingsPage() {
       console.error("Failed to update currency:", err);
       setError("Failed to update currency. Please try again.");
     }
+  };
+
+  const handleBeverageChange = (type: BeverageType) => {
+    setBeverageType(type);
   };
 
   const handleAddLocation = async () => {
@@ -153,12 +161,64 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-cream">
       <PageHeader title="Settings" />
 
-      <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-8">
+      <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-8 pb-28">
         {error && (
           <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700 border border-red-200">
             {error}
           </div>
         )}
+
+        {/* Beverage Type Section */}
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-1 w-1 rounded-full bg-gold-500"></div>
+            <h2 className="text-lg font-semibold text-wine-950">Beverage Type</h2>
+          </div>
+
+          <Card variant="elevated" className="p-6 rounded-2xl">
+            <p className="text-sm text-wine-700 font-medium mb-4">
+              Choose your beverage — this changes the tasting categories, form labels, and scoring system throughout the app.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => handleBeverageChange("wine")}
+                className={cn(
+                  "flex flex-col items-center gap-2 p-5 rounded-2xl border-2 transition-all duration-200",
+                  !isBeer
+                    ? "border-[#7C2D36] bg-[#7C2D36] text-white shadow-lg shadow-[#7C2D36]/20"
+                    : "border-[#E5E1DB] bg-white text-[#1A1A1A] hover:border-[#7C2D36]/40 hover:bg-[#FDF2F4]"
+                )}
+              >
+                <Wine className="w-8 h-8" />
+                <span className="text-sm font-bold">Wine</span>
+                <span className={cn(
+                  "text-[10px]",
+                  !isBeer ? "text-white/70" : "text-[#6B7280]"
+                )}>
+                  WSET Tasting
+                </span>
+              </button>
+              <button
+                onClick={() => handleBeverageChange("beer")}
+                className={cn(
+                  "flex flex-col items-center gap-2 p-5 rounded-2xl border-2 transition-all duration-200",
+                  isBeer
+                    ? "border-[#B45309] bg-[#B45309] text-white shadow-lg shadow-[#B45309]/20"
+                    : "border-[#E5E1DB] bg-white text-[#1A1A1A] hover:border-[#B45309]/40 hover:bg-[#FFFBEB]"
+                )}
+              >
+                <Beer className="w-8 h-8" />
+                <span className="text-sm font-bold">Beer</span>
+                <span className={cn(
+                  "text-[10px]",
+                  isBeer ? "text-white/70" : "text-[#6B7280]"
+                )}>
+                  BJCP Scoring
+                </span>
+              </button>
+            </div>
+          </Card>
+        </div>
 
         {/* Account Section */}
         <div>
@@ -172,7 +232,7 @@ export default function SettingsPage() {
               <div>
                 <p className="text-sm text-wine-700 font-medium">Email Address</p>
                 <p className="text-base font-semibold text-wine-950 mt-2">
-                  {user?.email || "Loading..."}
+                  {userData?.email || "Loading..."}
                 </p>
               </div>
             </div>
@@ -214,7 +274,9 @@ export default function SettingsPage() {
         <div>
           <div className="flex items-center gap-3 mb-4">
             <div className="h-1 w-1 rounded-full bg-gold-500"></div>
-            <h2 className="text-lg font-semibold text-wine-950">Wine Storage Locations</h2>
+            <h2 className="text-lg font-semibold text-wine-950">
+              {isBeer ? "Beer Storage Locations" : "Wine Storage Locations"}
+            </h2>
           </div>
 
           <div className="space-y-3">
