@@ -12,6 +12,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import { PhotoCapture } from "@/components/ui/photo-capture";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Loading } from "@/components/ui/loading";
+import { FredCelebration } from "@/components/ui/fred-celebration";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
@@ -217,6 +218,7 @@ export default function TastingDetailPage() {
   const [sessionSummary, setSessionSummary] = useState("");
   const [isSavingSummary, setIsSavingSummary] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showFredCelebration, setShowFredCelebration] = useState(false);
   const [entryPhoto, setEntryPhoto] = useState<File | null>(null);
   const [entryPhotoPreview, setEntryPhotoPreview] = useState<string | null>(null);
   const entryPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -386,14 +388,29 @@ export default function TastingDetailPage() {
         };
       });
 
-      // Play beefy soundbite for a perfect 100!
+      // Check celebration conditions after updating local state
       if (expandedEntry.totalScore === 100) {
-        try {
-          const audio = new Audio("/beefy.mp3");
-          audio.volume = 1.0;
-          audio.play();
-        } catch (audioErr) {
-          console.error("Could not play soundbite:", audioErr);
+        // Build the updated entries list to check 4x perfect
+        const updatedEntries = (tasting?.entries || []).map((e) =>
+          e.id === expandedEntry.entryId
+            ? { ...e, totalScore: expandedEntry.totalScore }
+            : e
+        );
+        const allPerfect = updatedEntries.length >= 4 &&
+          updatedEntries.every((e) => e.totalScore === 100);
+
+        if (allPerfect) {
+          // FULL FRED MODE — bouncing Fred celebration
+          setShowFredCelebration(true);
+        } else {
+          // Single 100 — just the beefy soundbite
+          try {
+            const audio = new Audio("/beefy.mp3");
+            audio.volume = 1.0;
+            audio.play();
+          } catch (audioErr) {
+            console.error("Could not play soundbite:", audioErr);
+          }
         }
       }
 
@@ -1713,6 +1730,11 @@ export default function TastingDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Fred Celebration Overlay */}
+      {showFredCelebration && (
+        <FredCelebration onClose={() => setShowFredCelebration(false)} />
+      )}
     </div>
   );
 }

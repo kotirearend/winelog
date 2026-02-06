@@ -108,8 +108,9 @@ export async function POST(request: Request) {
       }
     }
 
-    // Accept beverageType from raw body (not in zod schema)
+    // Accept extra fields from raw body (not in zod schema)
     const beverageType = body.beverageType === 'beer' ? 'beer' : 'wine';
+    const notesShort = typeof body.notesShort === 'string' ? body.notesShort.slice(0, 500) : null;
 
     const newBottle = await db
       .insert(bottles)
@@ -131,6 +132,7 @@ export async function POST(request: Request) {
         quantity: quantity || 1,
         photoUrl: photoUrl || null,
         beverageType,
+        notesShort: notesShort || null,
       })
       .returning();
 

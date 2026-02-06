@@ -68,6 +68,7 @@ export default function AddBottlePage() {
   const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState(defaultCurrency);
   const [quantity, setQuantity] = useState("1");
+  const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const producerInputRef = useRef<HTMLInputElement>(null);
@@ -212,6 +213,7 @@ export default function AddBottlePage() {
       if (purchaseSourceName) bottleData.purchaseSourceName = purchaseSourceName;
       if (price) bottleData.priceAmount = parseFloat(price);
       if (currency) bottleData.priceCurrency = currency;
+      if (notes.trim()) bottleData.notesShort = notes.trim();
 
       const response = await api.post("/bottles", bottleData);
 
@@ -370,6 +372,23 @@ export default function AddBottlePage() {
             />
           </div>
         )}
+
+        {/* Notes */}
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-semibold text-[#1A1A1A]">
+            Notes
+          </label>
+          <textarea
+            placeholder={isBeer ? "e.g., Got this from the craft beer shop, limited edition..." : "e.g., Recommended by sommelier, pairs well with lamb..."}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            maxLength={500}
+            className="min-h-20 w-full rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-3 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20 resize-none"
+          />
+          {notes.length > 0 && (
+            <p className="text-xs text-[#6B7280] text-right">{notes.length}/500</p>
+          )}
+        </div>
 
         {/* Storage Location */}
         <div className="flex flex-col gap-2">
