@@ -56,6 +56,32 @@ class ApiClient {
     return res.json();
   }
 
+  async uploadFile(path: string, file: File): Promise<{ photoUrl: string; filename: string }> {
+    const token = this.getToken();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    // Don't set Content-Type — browser sets it with boundary for FormData
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    if (res.status === 401) {
+      this.clearToken();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+      throw new Error('Unauthorized');
+    }
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  }
+
   async patch(path: string, body: unknown) {
     const res = await this.fetch(path, { method: 'PATCH', body: JSON.stringify(body) });
     if (!res.ok) throw new Error(await res.text());

@@ -99,32 +99,8 @@ export default function AddBottlePage() {
 
   const uploadPhoto = async (file: File): Promise<string | null> => {
     try {
-      // Get signed URL
-      const signResponse = await api.post("/uploads/sign", {
-        filename: file.name,
-        contentType: file.type,
-      });
-
-      const signedUrl = signResponse.signedUrl || signResponse.url;
-      if (!signedUrl) {
-        throw new Error("No signed URL returned");
-      }
-
-      // Upload directly to storage
-      const uploadResponse = await fetch(signedUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": file.type,
-        },
-        body: file,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error("Upload failed");
-      }
-
-      // Return public URL
-      return signResponse.publicUrl || signedUrl.split("?")[0];
+      const result = await api.uploadFile("/uploads", file);
+      return result.photoUrl;
     } catch (err) {
       console.error("Photo upload failed:", err);
       return null;
