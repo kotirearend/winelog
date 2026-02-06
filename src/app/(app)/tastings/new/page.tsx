@@ -105,67 +105,77 @@ export default function NewTastingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7]">
-      <PageHeader title="New Tasting" showBack />
+    <div className="min-h-screen bg-cream">
+      <PageHeader title="New Tasting" showBack variant="wine" />
 
       <div className="p-4 sm:p-6 max-w-2xl mx-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
           {submitError && (
-            <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700">
+            <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700 border border-red-200">
               {submitError}
             </div>
           )}
 
-          <Input
-            label="Tasting Name"
-            name="name"
-            placeholder="e.g. Pinot Noir Lineup"
-            value={formData.name}
-            onChange={handleChange}
-            error={errors.name}
-            required
-          />
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
             <Input
-              label="Date"
-              name="date"
-              type="date"
-              value={formData.date}
+              label="Tasting Name"
+              name="name"
+              placeholder="e.g. Pinot Noir Lineup"
+              value={formData.name}
               onChange={handleChange}
-              error={errors.date}
-              required
-            />
-
-            <Input
-              label="Time"
-              name="time"
-              type="time"
-              value={formData.time}
-              onChange={handleChange}
-              error={errors.time}
+              error={errors.name}
               required
             />
           </div>
 
-          <Input
-            label="Venue"
-            name="venue"
-            placeholder="e.g. Downtown Wine Bar"
-            value={formData.venue}
-            onChange={handleChange}
-          />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <Input
+                label="Date"
+                name="date"
+                type="date"
+                value={formData.date}
+                onChange={handleChange}
+                error={errors.date}
+                required
+              />
+            </div>
 
-          <Input
-            label="Participants"
-            name="participants"
-            placeholder="e.g. Sarah, John, Mike"
-            value={formData.participants}
-            onChange={handleChange}
-          />
+            <div>
+              <Input
+                label="Time"
+                name="time"
+                type="time"
+                value={formData.time}
+                onChange={handleChange}
+                error={errors.time}
+                required
+              />
+            </div>
+          </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-[#1A1A1A]">
+          <div>
+            <Input
+              label="Venue"
+              name="venue"
+              placeholder="e.g. Downtown Wine Bar"
+              value={formData.venue}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <Input
+              label="Participants"
+              name="participants"
+              placeholder="e.g. Sarah, John, Mike"
+              value={formData.participants}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            <label className="text-sm font-semibold text-wine-950">
               Notes
             </label>
             <textarea
@@ -173,16 +183,17 @@ export default function NewTastingPage() {
               placeholder="Any additional notes about this tasting..."
               value={formData.notes}
               onChange={handleChange}
-              className="flex min-h-32 w-full rounded-md border border-[#E5E1DB] bg-white px-3 py-2 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-colors focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36] focus:ring-offset-0 disabled:cursor-not-allowed disabled:bg-[#FDFBF7] disabled:text-[#6B7280]"
+              className="flex min-h-32 w-full rounded-xl border-2 border-warm-border bg-white px-4 py-3 text-sm text-wine-950 placeholder:text-wine-500 transition-all duration-200 focus:outline-none focus:border-wine-800 focus:ring-2 focus:ring-wine-800/20 disabled:cursor-not-allowed disabled:bg-cream-dark disabled:text-wine-600"
             />
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-6">
             <Button
               type="submit"
+              variant="gold"
               isLoading={isSubmitting}
               disabled={isSubmitting}
-              className="flex-1"
+              className="flex-1 rounded-xl"
             >
               Create Tasting
             </Button>
@@ -191,7 +202,7 @@ export default function NewTastingPage() {
               variant="outline"
               onClick={() => router.back()}
               disabled={isSubmitting}
-              className="flex-1"
+              className="flex-1 rounded-xl"
             >
               Cancel
             </Button>

@@ -1,41 +1,99 @@
 @import "tailwindcss";
 
 :root {
-  --wine-primary: #7C2D36;
-  --wine-primary-light: #9B3A44;
-  --wine-primary-dark: #5C1F28;
-  --bg-warm: #FDFBF7;
-  --bg-card: #FFFFFF;
+  --wine-50: #FDF2F4;
+  --wine-100: #FCE4E8;
+  --wine-200: #F9CCD4;
+  --wine-300: #F4A3B3;
+  --wine-400: #EC6B84;
+  --wine-500: #E04163;
+  --wine-600: #C42348;
+  --wine-700: #A31D3D;
+  --wine-800: #7C2D36;
+  --wine-900: #5C1F28;
+  --wine-950: #3A0F18;
+
+  --gold-50: #FFFBEB;
+  --gold-100: #FEF3C7;
+  --gold-200: #FDE68A;
+  --gold-300: #FCD34D;
+  --gold-400: #FBBF24;
+  --gold-500: #D4A847;
+  --gold-600: #B8860B;
+
+  --cream: #FDFBF7;
+  --cream-dark: #F5F1EB;
+  --warm-gray: #6B7280;
+  --warm-border: #E5E1DB;
   --text-primary: #1A1A1A;
   --text-secondary: #6B7280;
-  --border-warm: #E5E1DB;
-  --accent-gold: #D4A847;
-  --accent-green: #059669;
+  --green: #059669;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background-color: var(--bg-warm);
+  background-color: var(--cream);
   color: var(--text-primary);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   min-height: 100dvh;
 }
 
-/* Mobile-first: max-width container for app feel */
+/* Mobile app container */
 .app-container {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100dvh;
   position: relative;
+  background: white;
+  box-shadow: 0 0 40px rgba(0,0,0,0.05);
 }
 
-/* Safe area padding for mobile */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .pb-safe {
-    padding-bottom: calc(env(safe-area-inset-bottom) + 4rem);
+@media (max-width: 480px) {
+  .app-container {
+    box-shadow: none;
   }
 }
 
-/* Hide scrollbar on mobile nav */
+/* Safe area for bottom nav */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 5rem);
+  }
+}
+
+.pb-safe {
+  padding-bottom: 5.5rem;
+}
+
+/* Scrollbar styling */
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Smooth transitions for interactive elements */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:active {
+  transform: scale(0.98);
+}
+
+/* Wine gradient background for headers */
+.wine-gradient {
+  background: linear-gradient(135deg, #7C2D36 0%, #5C1F28 50%, #3A0F18 100%);
+}
+
+/* Gold shimmer accent */
+.gold-accent {
+  background: linear-gradient(135deg, #D4A847 0%, #FBBF24 50%, #D4A847 100%);
+}
+
+/* Score ring animation */
+@keyframes scoreReveal {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: var(--score-offset); }
+}

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Wine } from "lucide-react";
+import { Plus, Wine, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,9 +35,9 @@ function formatDate(dateString: string): string {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 90) return "bg-[#D4A847]"; // gold
-  if (score >= 80) return "bg-[#059669]"; // green
-  return "bg-[#E5E1DB]"; // neutral
+  if (score >= 90) return "bg-gold-500 text-white";
+  if (score >= 80) return "bg-wine-800 text-white";
+  return "bg-wine-100 text-wine-900";
 }
 
 function getTopScore(entries: TastingEntry[]): number | null {
@@ -91,31 +91,32 @@ export default function TastingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7]">
+    <div className="min-h-screen bg-cream">
       <PageHeader
         title="Tastings"
+        variant="wine"
         action={
           <Button
-            size="icon"
+            variant="gold"
             onClick={handleNewTasting}
             className="flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
-            <span className="hidden sm:inline">New</span>
+            <span className="hidden sm:inline">New Tasting</span>
           </Button>
         }
       />
 
       <div className="p-4 sm:p-6 max-w-4xl mx-auto">
         {error && (
-          <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700 mb-6">
+          <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700 mb-6 border border-red-200">
             {error}
           </div>
         )}
 
         {tastings.length === 0 ? (
           <EmptyState
-            icon={<Wine className="w-12 h-12" />}
+            icon={<Wine className="w-12 h-12 text-wine-800" />}
             title="No tastings yet"
             description="Start your first tasting session to begin comparing wines."
             action={{
@@ -131,32 +132,34 @@ export default function TastingsPage() {
               return (
                 <Card
                   key={tasting.id}
-                  className="cursor-pointer transition-all hover:shadow-md active:shadow-sm p-4 sm:p-6"
+                  variant="elevated"
+                  className="card-hover cursor-pointer p-5 sm:p-6 rounded-2xl overflow-hidden"
                   onClick={() => handleTastingClick(tasting.id)}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-bold text-[#1A1A1A] truncate">
+                      <h3 className="text-lg font-bold text-wine-950 truncate">
                         {tasting.name}
                       </h3>
 
-                      <p className="text-sm text-[#6B7280] mt-1">
+                      <p className="text-sm text-wine-700 mt-1.5 font-medium">
                         {formatDate(tasting.tastedAt)}
                       </p>
 
                       {tasting.venue && (
-                        <p className="text-sm text-[#6B7280] truncate">
+                        <p className="text-sm text-wine-600 truncate mt-1">
                           {tasting.venue}
                         </p>
                       )}
 
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Badge variant="secondary">
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Badge variant="secondary" className="bg-wine-100 text-wine-800 border-0">
                           {entries.length} wine{entries.length !== 1 ? "s" : ""}
                         </Badge>
 
                         {topScore !== null && (
-                          <Badge variant="score">
+                          <Badge variant="score" className="bg-gradient-to-r from-gold-400 to-gold-600 text-wine-950 border-0 font-bold flex items-center gap-1">
+                            <Sparkles className="w-3.5 h-3.5" />
                             Top: {topScore}/100
                           </Badge>
                         )}
@@ -165,7 +168,7 @@ export default function TastingsPage() {
 
                     {topScore !== null && (
                       <div className="flex-shrink-0 text-right">
-                        <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold text-white ${getScoreColor(topScore)}`}>
+                        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full text-lg font-bold ${getScoreColor(topScore)} shadow-lg`}>
                           {topScore}
                         </div>
                       </div>

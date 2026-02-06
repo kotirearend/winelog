@@ -47,21 +47,40 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-semibold text-[#1A1A1A]">Create Account</h2>
-        <p className="text-sm text-[#6B7280]">
-          Join Winelog to start tracking your wine collection
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="space-y-3">
+        <h2 className="text-3xl font-bold text-[#3A0F18]">Join Winelog</h2>
+        <p className="text-[#8B7355] font-light">
+          Create your account to begin your wine journey
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Error Message */}
         {error && (
-          <div className="rounded-md bg-red-50 p-3 border border-red-200">
-            <p className="text-sm text-red-700">{error}</p>
+          <div className="rounded-xl bg-red-50/80 border border-red-200/50 p-4 backdrop-blur-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 pt-0.5">
+                <svg
+                  className="w-5 h-5 text-red-600"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <p className="text-sm text-red-700 font-medium">{error}</p>
+            </div>
           </div>
         )}
 
+        {/* Full Name Input */}
         <Input
           label="Full Name"
           type="text"
@@ -72,8 +91,9 @@ export default function SignupPage() {
           disabled={isLoading}
         />
 
+        {/* Email Input */}
         <Input
-          label="Email"
+          label="Email Address"
           type="email"
           placeholder="you@example.com"
           value={email}
@@ -82,6 +102,7 @@ export default function SignupPage() {
           disabled={isLoading}
         />
 
+        {/* Password Input */}
         <Input
           label="Password"
           type="password"
@@ -92,15 +113,16 @@ export default function SignupPage() {
           disabled={isLoading}
         />
 
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-[#1A1A1A]">
+        {/* Currency Select */}
+        <div className="flex flex-col gap-3">
+          <label className="text-sm font-semibold text-[#3A0F18]">
             Default Currency
           </label>
           <select
             value={defaultCurrency}
             onChange={(e) => setDefaultCurrency(e.target.value)}
             disabled={isLoading}
-            className="flex h-10 w-full rounded-md border border-[#E5E1DB] bg-white px-3 py-2 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-colors focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36] focus:ring-offset-0 disabled:cursor-not-allowed disabled:bg-[#FDFBF7] disabled:text-[#6B7280]"
+            className="flex h-11 w-full rounded-lg border border-[#D5CFCA] bg-white/80 px-4 py-2.5 text-sm text-[#3A0F18] placeholder:text-[#8B7355] transition-all focus:outline-none focus:border-[#D4A847] focus:ring-2 focus:ring-[#D4A847]/20 focus:bg-white disabled:cursor-not-allowed disabled:bg-[#F5F1EB] disabled:text-[#8B7355]"
           >
             {CURRENCIES.map((currency) => (
               <option key={currency.code} value={currency.code}>
@@ -110,9 +132,11 @@ export default function SignupPage() {
           </select>
         </div>
 
+        {/* Create Account Button */}
         <Button
           type="submit"
-          className="w-full"
+          variant="gold"
+          className="w-full mt-2"
           isLoading={isLoading}
           disabled={isLoading}
         >
@@ -120,13 +144,25 @@ export default function SignupPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-[#6B7280]">
-        Already have an account?{" "}
+      {/* Divider */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-[#E5E1DB]" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-2 bg-white/90 text-[#8B7355] font-light">
+            Already a member?
+          </span>
+        </div>
+      </div>
+
+      {/* Sign In Link */}
+      <p className="text-center">
         <Link
           href="/login"
-          className="text-[#7C2D36] font-medium hover:underline"
+          className="text-[#D4A847] font-medium hover:text-[#FBBF24] transition-colors underline"
         >
-          Sign in
+          Sign in to your account
         </Link>
       </p>
     </div>

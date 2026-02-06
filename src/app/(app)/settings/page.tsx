@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Edit2, Check, X } from "lucide-react";
+import { Plus, Edit2, Check, X, LogOut } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -150,27 +150,47 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7]">
+    <div className="min-h-screen bg-cream">
       <PageHeader title="Settings" />
 
       <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-8">
         {error && (
-          <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700">
+          <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700 border border-red-200">
             {error}
           </div>
         )}
 
+        {/* Account Section */}
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-1 w-1 rounded-full bg-gold-500"></div>
+            <h2 className="text-lg font-semibold text-wine-950">Account</h2>
+          </div>
+
+          <Card variant="elevated" className="p-6 rounded-2xl">
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-wine-700 font-medium">Email Address</p>
+                <p className="text-base font-semibold text-wine-950 mt-2">
+                  {user?.email || "Loading..."}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
         {/* Default Currency Section */}
         <div>
-          <h2 className="text-lg font-semibold text-[#1A1A1A] mb-4">
-            Default Currency
-          </h2>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-1 w-1 rounded-full bg-gold-500"></div>
+            <h2 className="text-lg font-semibold text-wine-950">Default Currency</h2>
+          </div>
 
-          <Card className="p-6">
+          <Card variant="elevated" className="p-6 rounded-2xl">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm text-[#6B7280]">Currency for prices</p>
-                <p className="text-lg font-semibold text-[#1A1A1A] mt-1">
+                <p className="text-sm text-wine-700 font-medium">Currency for prices</p>
+                <p className="text-base font-semibold text-wine-950 mt-1">
                   {selectedCurrency}
                 </p>
               </div>
@@ -178,7 +198,7 @@ export default function SettingsPage() {
               <select
                 value={selectedCurrency}
                 onChange={(e) => handleCurrencyChange(e.target.value)}
-                className="rounded-md border border-[#E5E1DB] bg-white px-4 py-2 text-sm font-medium text-[#1A1A1A] transition-colors focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36] focus:ring-offset-0"
+                className="rounded-xl border-2 border-warm-border bg-cream px-4 py-2.5 text-sm font-semibold text-wine-950 transition-all duration-200 focus:outline-none focus:border-wine-800 focus:ring-2 focus:ring-wine-800/20 hover:border-wine-200"
               >
                 {CURRENCIES.map((currency) => (
                   <option key={currency} value={currency}>
@@ -192,20 +212,22 @@ export default function SettingsPage() {
 
         {/* Manage Locations Section */}
         <div>
-          <h2 className="text-lg font-semibold text-[#1A1A1A] mb-4">
-            Manage Locations
-          </h2>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-1 w-1 rounded-full bg-gold-500"></div>
+            <h2 className="text-lg font-semibold text-wine-950">Wine Storage Locations</h2>
+          </div>
 
           <div className="space-y-3">
             {locations.length === 0 ? (
-              <Card className="p-6 text-center">
-                <p className="text-sm text-[#6B7280]">No locations yet</p>
+              <Card variant="outlined" className="p-8 text-center rounded-2xl border-2 border-dashed border-warm-border">
+                <p className="text-sm text-wine-700 font-medium">No storage locations yet</p>
               </Card>
             ) : (
               locations.map((location) => (
                 <Card
                   key={location.id}
-                  className="p-4 flex items-center justify-between gap-4"
+                  variant="outlined"
+                  className="p-4 flex items-center justify-between gap-4 rounded-2xl border-2 border-warm-border hover:border-wine-200 transition-colors duration-200"
                 >
                   {editingLocationId === location.id ? (
                     <div className="flex-1 flex gap-2">
@@ -217,6 +239,7 @@ export default function SettingsPage() {
                       />
                       <Button
                         size="icon"
+                        variant="gold"
                         onClick={handleSaveLocation}
                         disabled={isSaving || !editingLocationName.trim()}
                       >
@@ -233,12 +256,13 @@ export default function SettingsPage() {
                     </div>
                   ) : (
                     <>
-                      <p className="font-medium text-[#1A1A1A]">{location.name}</p>
+                      <p className="font-semibold text-wine-950">{location.name}</p>
                       <Button
                         size="icon"
                         variant="ghost"
                         onClick={() => handleEditLocation(location)}
                         disabled={isSaving}
+                        className="text-wine-800 hover:text-wine-950 hover:bg-wine-50"
                       >
                         <Edit2 className="w-4 h-4" />
                       </Button>
@@ -250,7 +274,7 @@ export default function SettingsPage() {
           </div>
 
           {isAddingLocation ? (
-            <Card className="p-4 mt-3 flex gap-2">
+            <Card variant="outlined" className="p-4 mt-3 flex gap-2 rounded-2xl border-2 border-wine-200 bg-wine-50/50">
               <Input
                 placeholder="New location name"
                 value={newLocationName}
@@ -258,6 +282,7 @@ export default function SettingsPage() {
                 className="flex-1"
               />
               <Button
+                variant="gold"
                 onClick={handleAddLocation}
                 disabled={isSaving || !newLocationName.trim()}
               >
@@ -278,7 +303,7 @@ export default function SettingsPage() {
             <Button
               variant="outline"
               onClick={() => setIsAddingLocation(true)}
-              className="w-full mt-3 flex items-center justify-center gap-2"
+              className="w-full mt-3 flex items-center justify-center gap-2 rounded-xl border-2 border-warm-border text-wine-800 hover:bg-wine-50"
               disabled={isSaving}
             >
               <Plus className="w-4 h-4" />
@@ -287,28 +312,16 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* Account Section */}
-        <div>
-          <h2 className="text-lg font-semibold text-[#1A1A1A] mb-4">Account</h2>
-
-          <Card className="p-6 space-y-4">
-            <div>
-              <p className="text-sm text-[#6B7280]">Email</p>
-              <p className="text-lg font-medium text-[#1A1A1A] mt-1">
-                {user?.email || "Loading..."}
-              </p>
-            </div>
-
-            <div className="pt-4 border-t border-[#E5E1DB]">
-              <Button
-                variant="destructive"
-                onClick={handleSignOut}
-                className="w-full"
-              >
-                Sign Out
-              </Button>
-            </div>
-          </Card>
+        {/* Sign Out Section */}
+        <div className="pt-6 border-t border-warm-border">
+          <Button
+            variant="destructive"
+            onClick={handleSignOut}
+            className="w-full flex items-center justify-center gap-2 rounded-xl"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </Button>
         </div>
       </div>
     </div>

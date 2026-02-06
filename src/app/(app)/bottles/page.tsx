@@ -99,17 +99,18 @@ export default function BottlesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7]">
+    <div className="min-h-screen bg-cream">
       <PageHeader
         title="My Cellar"
+        variant="wine"
         action={
           <Button
-            size="icon"
+            variant="gold"
             onClick={handleAddButton}
             className="flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
-            <span className="hidden sm:inline">Add</span>
+            <span className="hidden sm:inline">Add Bottle</span>
           </Button>
         }
       />
@@ -120,14 +121,14 @@ export default function BottlesPage() {
           onChangeDebounced={setSearch}
         />
 
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
           <button
             onClick={() => handleFilterChange(null)}
             className={cn(
-              "inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C2D36] focus-visible:ring-offset-2",
+              "inline-flex items-center justify-center whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-800 focus-visible:ring-offset-2 flex-shrink-0",
               selectedLocationId === null
-                ? "bg-[#7C2D36] text-white"
-                : "bg-[#F5F1EB] text-[#1A1A1A] hover:bg-[#EBE5DB]"
+                ? "bg-wine-800 text-white shadow-lg shadow-wine-800/30 scale-[1.02]"
+                : "bg-cream-dark text-wine-900 hover:bg-warm-border hover:shadow-md"
             )}
           >
             All
@@ -138,10 +139,10 @@ export default function BottlesPage() {
               key={location.id}
               onClick={() => handleFilterChange(location.id)}
               className={cn(
-                "inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C2D36] focus-visible:ring-offset-2 flex-shrink-0",
+                "inline-flex items-center justify-center whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-800 focus-visible:ring-offset-2 flex-shrink-0",
                 selectedLocationId === location.id
-                  ? "bg-[#7C2D36] text-white"
-                  : "bg-[#F5F1EB] text-[#1A1A1A] hover:bg-[#EBE5DB]"
+                  ? "bg-wine-800 text-white shadow-lg shadow-wine-800/30 scale-[1.02]"
+                  : "bg-cream-dark text-wine-900 hover:bg-warm-border hover:shadow-md"
               )}
             >
               {location.name}
@@ -150,16 +151,16 @@ export default function BottlesPage() {
         </div>
 
         {error && (
-          <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700">
+          <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700 border border-red-200">
             {error}
           </div>
         )}
 
         {bottles.length === 0 ? (
           <EmptyState
-            icon={<Wine className="w-12 h-12" />}
+            icon={<Wine className="w-12 h-12 text-wine-800" />}
             title="No bottles in your cellar yet"
-            description="Add your first bottle to get started tracking your collection."
+            description="Add your first bottle to get started tracking your wine collection."
             action={{
               label: "Add Bottle",
               onClick: handleAddButton,
@@ -170,58 +171,59 @@ export default function BottlesPage() {
             {bottles.map((bottle) => (
               <Card
                 key={bottle.id}
-                className="cursor-pointer transition-all hover:shadow-md active:shadow-sm p-4"
+                variant="elevated"
+                className="card-hover cursor-pointer p-5 rounded-2xl overflow-hidden"
                 onClick={() => handleBottleClick(bottle.id)}
               >
-                <div className="flex gap-4">
+                <div className="flex gap-5">
                   <div className="flex-shrink-0">
                     {bottle.photoUrl ? (
                       <img
                         src={bottle.photoUrl}
                         alt={bottle.name}
-                        className="w-16 h-16 rounded object-cover bg-[#F5F1EB]"
+                        className="w-20 h-20 rounded-xl object-cover bg-cream-dark"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded bg-[#F5F1EB] flex items-center justify-center">
-                        <Wine className="w-8 h-8 text-[#6B7280]" />
+                      <div className="w-20 h-20 rounded-xl bg-wine-50 flex items-center justify-center border border-wine-200">
+                        <Wine className="w-10 h-10 text-wine-800" />
                       </div>
                     )}
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-[#1A1A1A] truncate">
+                    <h3 className="font-bold text-lg text-wine-950 truncate">
                       {bottle.name}
                     </h3>
 
                     {bottle.producer && (
-                      <p className="text-sm text-[#6B7280] truncate">
+                      <p className="text-sm text-wine-700 truncate mt-0.5">
                         {bottle.producer}
                       </p>
                     )}
 
-                    <div className="mt-2 flex flex-wrap gap-2">
+                    <div className="mt-3 flex flex-wrap gap-2">
                       {bottle.vintage && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs bg-wine-100 text-wine-800 border-0">
                           {bottle.vintage}
+                        </Badge>
+                      )}
+                      {bottle.quantity > 0 && (
+                        <Badge variant="secondary" className="text-xs bg-wine-800 text-white border-0">
+                          {bottle.quantity} {bottle.quantity === 1 ? 'bottle' : 'bottles'}
                         </Badge>
                       )}
                     </div>
 
-                    <div className="mt-3 space-y-1">
+                    <div className="mt-3 space-y-1.5">
                       {bottle.locationId && locations.length > 0 && (
-                        <p className="text-xs text-[#6B7280]">
+                        <p className="text-xs text-wine-700 font-medium">
                           {locations.find(l => l.id === bottle.locationId)?.name || ""}
                         </p>
                       )}
 
-                      <p className="text-sm font-medium text-[#1A1A1A]">
-                        Qty: {bottle.quantity}
-                      </p>
-
                       {bottle.priceAmount && (
-                        <p className="text-sm text-[#6B7280]">
-                          {bottle.priceCurrency || "GBP"}{" "}
-                          {Number(bottle.priceAmount).toFixed(2)}
+                        <p className="text-sm font-semibold text-gold-600">
+                          {bottle.priceCurrency || "GBP"} {Number(bottle.priceAmount).toFixed(2)}
                         </p>
                       )}
                     </div>

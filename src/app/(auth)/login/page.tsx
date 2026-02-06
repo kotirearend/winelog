@@ -33,23 +33,42 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-semibold text-[#1A1A1A]">Sign In</h2>
-        <p className="text-sm text-[#6B7280]">
-          Enter your credentials to access your wine collection
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="space-y-3">
+        <h2 className="text-3xl font-bold text-[#3A0F18]">Welcome Back</h2>
+        <p className="text-[#8B7355] font-light">
+          Sign in to your wine collection
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Error Message */}
         {error && (
-          <div className="rounded-md bg-red-50 p-3 border border-red-200">
-            <p className="text-sm text-red-700">{error}</p>
+          <div className="rounded-xl bg-red-50/80 border border-red-200/50 p-4 backdrop-blur-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 pt-0.5">
+                <svg
+                  className="w-5 h-5 text-red-600"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <p className="text-sm text-red-700 font-medium">{error}</p>
+            </div>
           </div>
         )}
 
+        {/* Email Input */}
         <Input
-          label="Email"
+          label="Email Address"
           type="email"
           placeholder="you@example.com"
           value={email}
@@ -58,6 +77,7 @@ export default function LoginPage() {
           disabled={isLoading}
         />
 
+        {/* Password Input */}
         <Input
           label="Password"
           type="password"
@@ -68,9 +88,11 @@ export default function LoginPage() {
           disabled={isLoading}
         />
 
+        {/* Sign In Button */}
         <Button
           type="submit"
-          className="w-full"
+          variant="gold"
+          className="w-full mt-2"
           isLoading={isLoading}
           disabled={isLoading}
         >
@@ -78,13 +100,25 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-[#6B7280]">
-        Don't have an account?{" "}
+      {/* Divider */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-[#E5E1DB]" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-2 bg-white/90 text-[#8B7355] font-light">
+            New to Winelog?
+          </span>
+        </div>
+      </div>
+
+      {/* Sign Up Link */}
+      <p className="text-center">
         <Link
           href="/signup"
-          className="text-[#7C2D36] font-medium hover:underline"
+          className="text-[#D4A847] font-medium hover:text-[#FBBF24] transition-colors underline"
         >
-          Create one
+          Create an account
         </Link>
       </p>
     </div>

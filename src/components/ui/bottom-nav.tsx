@@ -1,68 +1,55 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import React from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Home, Wine, ClipboardList, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface NavItem {
-  icon: React.ReactNode;
-  label: string;
-  href: string;
-}
-
-const navItems: NavItem[] = [
-  {
-    icon: <Home className="w-6 h-6" />,
-    label: "Home",
-    href: "/",
-  },
-  {
-    icon: <Wine className="w-6 h-6" />,
-    label: "Cellar",
-    href: "/bottles",
-  },
-  {
-    icon: <ClipboardList className="w-6 h-6" />,
-    label: "Tastings",
-    href: "/tastings",
-  },
-  {
-    icon: <Settings className="w-6 h-6" />,
-    label: "Settings",
-    href: "/settings",
-  },
+const NAV_ITEMS = [
+  { icon: Home, label: "Home", path: "/" },
+  { icon: Wine, label: "Cellar", path: "/bottles" },
+  { icon: ClipboardList, label: "Tastings", path: "/tastings" },
+  { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
-function BottomNav() {
+export function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const isActive = (path: string) => {
+    if (path === "/") return pathname === "/";
+    return pathname.startsWith(path);
+  };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 border-t border-[#E5E1DB] bg-white md:hidden z-40">
-      <div className="flex items-center justify-around gap-1">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 px-4 py-3 text-xs font-medium transition-colors",
-                isActive
-                  ? "text-[#7C2D36]"
-                  : "text-[#6B7280] hover:text-[#1A1A1A]"
-              )}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50">
+      <div className="mx-3 mb-3 rounded-2xl bg-white/80 backdrop-blur-xl border border-white/20 shadow-lg shadow-black/10">
+        <div className="flex items-center justify-around px-2 py-2">
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(item.path);
+            return (
+              <button
+                key={item.path}
+                onClick={() => router.push(item.path)}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl transition-all duration-200",
+                  active
+                    ? "bg-[#7C2D36] text-white shadow-md shadow-[#7C2D36]/30"
+                    : "text-[#6B7280] hover:text-[#7C2D36] active:scale-95"
+                )}
+              >
+                <item.icon className={cn("w-5 h-5", active && "stroke-[2.5]")} />
+                <span className={cn(
+                  "text-[10px] font-semibold leading-none",
+                  active ? "text-white" : "text-[#6B7280]"
+                )}>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );
 }
-
-export { BottomNav };

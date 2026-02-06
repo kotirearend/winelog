@@ -1,7 +1,8 @@
-import * as React from "react";
+import React from "react";
+import { Button } from "./button";
 import { cn } from "@/lib/utils";
 
-export interface EmptyStateProps {
+interface EmptyStateProps {
   icon?: React.ReactNode;
   title: string;
   description?: string;
@@ -12,38 +13,23 @@ export interface EmptyStateProps {
   className?: string;
 }
 
-function EmptyState({
-  icon,
-  title,
-  description,
-  action,
-  className,
-}: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <div
-      className={cn(
-        "flex flex-col items-center justify-center gap-4 rounded-lg border border-[#E5E1DB] bg-[#FDFBF7] p-12 text-center",
-        className
+    <div className={cn("flex flex-col items-center justify-center text-center py-16 px-6", className)}>
+      {icon && (
+        <div className="w-20 h-20 rounded-full bg-[#FDF2F4] flex items-center justify-center mb-5 text-[#7C2D36]">
+          {icon}
+        </div>
       )}
-    >
-      {icon && <div className="text-[#7C2D36]">{icon}</div>}
-
-      <h3 className="text-lg font-semibold text-[#1A1A1A]">{title}</h3>
-
+      <h3 className="text-lg font-bold text-[#1A1A1A] mb-1">{title}</h3>
       {description && (
-        <p className="max-w-sm text-sm text-[#6B7280]">{description}</p>
+        <p className="text-sm text-[#6B7280] max-w-xs mb-6">{description}</p>
       )}
-
       {action && (
-        <button
-          onClick={action.onClick}
-          className="mt-2 inline-flex items-center justify-center rounded-md bg-[#7C2D36] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#9B3A44] active:bg-[#5F232A]"
-        >
+        <Button onClick={action.onClick} size="sm">
           {action.label}
-        </button>
+        </Button>
       )}
     </div>
   );
 }
-
-export { EmptyState };

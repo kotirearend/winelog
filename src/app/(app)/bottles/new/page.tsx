@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, MapPin, Plus } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { PhotoCapture } from "@/components/ui/photo-capture";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
@@ -48,7 +49,6 @@ export default function AddBottlePage() {
       const locationsList = Array.isArray(data) ? data : data.data || [];
       setLocations(locationsList);
 
-      // Set default location from localStorage
       const lastLocationId = localStorage.getItem("lastUsedLocationId");
       if (lastLocationId && locationsList.some((l: Location) => l.id === lastLocationId)) {
         setSelectedLocationId(lastLocationId);
@@ -78,7 +78,6 @@ export default function AddBottlePage() {
   }, [fetchLocations, fetchUserSettings]);
 
   useEffect(() => {
-    // Focus name input on mount
     nameInputRef.current?.focus();
   }, []);
 
@@ -124,7 +123,6 @@ export default function AddBottlePage() {
 
       let finalLocationId = selectedLocationId;
 
-      // Create location if needed
       if (!selectedLocationId && newLocationName.trim()) {
         const newLocation = await api.post("/locations", {
           name: newLocationName.trim(),
@@ -132,12 +130,10 @@ export default function AddBottlePage() {
         finalLocationId = newLocation.id;
       }
 
-      // Save location preference
       if (finalLocationId) {
         localStorage.setItem("lastUsedLocationId", finalLocationId);
       }
 
-      // Create bottle
       const bottleData = {
         name: name.trim(),
         producer: undefined,
@@ -167,40 +163,45 @@ export default function AddBottlePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] pb-24 sm:pb-0">
-      <PageHeader title="Add Bottle" showBack />
+    <div className="min-h-screen bg-[#FDFBF7] pb-28 sm:pb-0">
+      <PageHeader title="Add Bottle" showBack variant="wine" />
 
       <form onSubmit={handleSubmit} className="p-4 sm:p-6 max-w-2xl mx-auto space-y-6">
         {/* Photo Capture */}
-        <div>
+        <Card variant="elevated" className="p-6 rounded-2xl">
           <PhotoCapture
             onPhotoSelected={setSelectedFile}
-            className="mb-4"
+            className=""
+          />
+        </Card>
+
+        {/* Name */}
+        <div>
+          <Input
+            ref={nameInputRef}
+            label="Bottle Name"
+            placeholder="e.g., Cabernet Sauvignon Reserve"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            error={errors.name}
+            required
+            autoFocus
           />
         </div>
 
-        {/* Name - Required, auto-focus */}
-        <Input
-          ref={nameInputRef}
-          label="Bottle Name"
-          placeholder="e.g., Cabernet Sauvignon"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          error={errors.name}
-          required
-          autoFocus
-        />
-
-        {/* Location Selector */}
+        {/* Location */}
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-[#1A1A1A]">Location</label>
+          <label className="text-sm font-semibold text-[#1A1A1A] flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-[#7C2D36]" />
+            Location
+          </label>
 
           {!showAddLocation ? (
             <div className="flex gap-2">
               <select
                 value={selectedLocationId}
                 onChange={(e) => setSelectedLocationId(e.target.value)}
-                className="flex-1 h-10 rounded-md border border-[#E5E1DB] bg-white px-3 py-2 text-sm text-[#1A1A1A] transition-colors focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36] focus:ring-offset-0"
+                className="flex-1 h-11 rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-2 text-sm text-[#1A1A1A] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20"
               >
                 <option value="">Select a location</option>
                 {locations.map((loc) => (
@@ -214,7 +215,9 @@ export default function AddBottlePage() {
                 type="button"
                 variant="outline"
                 onClick={() => setShowAddLocation(true)}
+                className="rounded-xl"
               >
+                <Plus className="w-4 h-4 mr-1" />
                 Add
               </Button>
             </div>
@@ -234,6 +237,7 @@ export default function AddBottlePage() {
                   setShowAddLocation(false);
                   setNewLocationName("");
                 }}
+                className="rounded-xl"
               >
                 Cancel
               </Button>
@@ -241,7 +245,7 @@ export default function AddBottlePage() {
           )}
 
           {errors.location && (
-            <p className="text-xs text-red-600">{errors.location}</p>
+            <p className="text-xs text-red-600 mt-1">{errors.location}</p>
           )}
         </div>
 
@@ -249,19 +253,19 @@ export default function AddBottlePage() {
         <button
           type="button"
           onClick={() => setShowMoreDetails(!showMoreDetails)}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#7C2D36] hover:text-[#9B3A44] transition-colors"
+          className="flex items-center gap-2 w-full px-4 py-3 text-sm font-semibold text-[#7C2D36] rounded-xl border-2 border-dashed border-[#E5E1DB] hover:border-[#7C2D36]/30 hover:bg-[#FDF2F4] transition-all"
         >
           {showMoreDetails ? (
             <ChevronUp className="w-4 h-4" />
           ) : (
             <ChevronDown className="w-4 h-4" />
           )}
-          More Details
+          {showMoreDetails ? "Hide Details" : "Add More Details"}
         </button>
 
-        {/* Expandable More Details Section */}
+        {/* Expandable Details */}
         {showMoreDetails && (
-          <div className="space-y-4 p-4 bg-[#F5F1EB] rounded-lg">
+          <Card variant="outlined" className="p-5 rounded-2xl space-y-5">
             <Input
               label="Vintage"
               type="number"
@@ -280,8 +284,8 @@ export default function AddBottlePage() {
             />
 
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-[#1A1A1A]">
-                Purchase Source Type
+              <label className="text-sm font-semibold text-[#1A1A1A]">
+                Purchase Source
               </label>
               <div className="flex gap-2 flex-wrap">
                 {PURCHASE_SOURCES.map((source) => (
@@ -290,10 +294,10 @@ export default function AddBottlePage() {
                     type="button"
                     onClick={() => setPurchaseSource(source)}
                     className={cn(
-                      "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      "inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium transition-all",
                       purchaseSource === source
-                        ? "bg-[#7C2D36] text-white"
-                        : "bg-white border border-[#E5E1DB] text-[#1A1A1A] hover:bg-[#FDFBF7]"
+                        ? "bg-[#7C2D36] text-white shadow-md shadow-[#7C2D36]/20"
+                        : "bg-white border-2 border-[#E5E1DB] text-[#1A1A1A] hover:border-[#7C2D36]/30 hover:bg-[#FDF2F4]"
                     )}
                   >
                     {source}
@@ -303,7 +307,7 @@ export default function AddBottlePage() {
             </div>
 
             <Input
-              label="Purchase Source Name"
+              label="Source Name"
               placeholder="e.g., Restaurant name or store"
               value={purchaseSourceName}
               onChange={(e) => setPurchaseSourceName(e.target.value)}
@@ -322,18 +326,22 @@ export default function AddBottlePage() {
               />
 
               <div className="flex flex-col gap-2 flex-1">
-                <label className="text-sm font-medium text-[#1A1A1A]">
+                <label className="text-sm font-semibold text-[#1A1A1A]">
                   Currency
                 </label>
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="h-10 rounded-md border border-[#E5E1DB] bg-white px-3 py-2 text-sm text-[#1A1A1A] transition-colors focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36] focus:ring-offset-0"
+                  className="h-11 rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-2 text-sm text-[#1A1A1A] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20"
                 >
                   <option value="USD">USD</option>
                   <option value="EUR">EUR</option>
                   <option value="GBP">GBP</option>
                   <option value="CAD">CAD</option>
+                  <option value="AUD">AUD</option>
+                  <option value="NZD">NZD</option>
+                  <option value="ZAR">ZAR</option>
+                  <option value="CHF">CHF</option>
                 </select>
               </div>
             </div>
@@ -353,25 +361,26 @@ export default function AddBottlePage() {
               onChange={(e) => setQuantity(e.target.value)}
               min="1"
             />
-          </div>
+          </Card>
         )}
 
         {errors.submit && (
-          <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700">
+          <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700 border border-red-100">
             {errors.submit}
           </div>
         )}
 
         {/* Save Button - Fixed on Mobile */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#E5E1DB] sm:static sm:border-t-0 sm:bg-transparent sm:p-0">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-lg border-t border-[#E5E1DB] sm:static sm:border-t-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none z-40">
           <Button
             type="submit"
             disabled={isLoading}
             isLoading={isLoading}
-            className="w-full"
+            variant="gold"
+            className="w-full rounded-xl"
             size="lg"
           >
-            Save Bottle
+            Save to Cellar
           </Button>
         </div>
       </form>
