@@ -85,6 +85,11 @@ export async function PATCH(
       name,
       producer,
       vintage,
+      grapes,
+      country,
+      region,
+      status,
+      locationId,
       purchaseDate,
       purchaseSourceType,
       purchaseSourceName,
@@ -105,6 +110,11 @@ export async function PATCH(
     if (name !== undefined) updateData.name = name;
     if (producer !== undefined) updateData.producer = producer;
     if (vintage !== undefined) updateData.vintage = vintage;
+    if (grapes !== undefined) updateData.grapes = grapes;
+    if (country !== undefined) updateData.country = country;
+    if (region !== undefined) updateData.region = region;
+    if (status !== undefined) updateData.status = status;
+    if (locationId !== undefined) updateData.locationId = locationId || null;
     if (purchaseDate !== undefined) updateData.purchaseDate = purchaseDate;
     if (purchaseSourceType !== undefined)
       updateData.purchaseSourceType = purchaseSourceType;

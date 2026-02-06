@@ -212,7 +212,7 @@ export default function AddBottlePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] pb-28 sm:pb-0">
+    <div className="min-h-screen bg-[#FDFBF7] pb-40 sm:pb-0">
       <PageHeader title="Add Wine" showBack variant="wine" />
 
       <form onSubmit={handleSubmit} className="p-4 sm:p-6 max-w-2xl mx-auto space-y-6">
@@ -515,7 +515,7 @@ export default function AddBottlePage() {
         )}
 
         {/* Save Button - Fixed on Mobile */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-lg border-t border-[#E5E1DB] sm:static sm:border-t-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none z-40">
+        <div className="fixed bottom-20 left-0 right-0 p-4 bg-white/80 backdrop-blur-lg border-t border-[#E5E1DB] sm:static sm:bottom-auto sm:border-t-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none z-50">
           <Button
             type="submit"
             disabled={isLoading}
