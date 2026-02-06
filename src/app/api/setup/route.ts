@@ -101,12 +101,41 @@ export async function GET() {
       ALTER TABLE tasting_entries ADD COLUMN IF NOT EXISTS tasting_notes JSONB;
     `);
 
+    // Migration: add status to bottles
+    await sql.unsafe(`
+      ALTER TABLE bottles ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'in_cellar';
+    `);
+
+    // Migration: add summary to tasting_sessions
+    await sql.unsafe(`
+      ALTER TABLE tasting_sessions ADD COLUMN IF NOT EXISTS summary TEXT;
+    `);
+
+    // Create drink_logs table
+    await sql.unsafe(`
+      CREATE TABLE IF NOT EXISTS drink_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        bottle_id UUID NOT NULL REFERENCES bottles(id) ON DELETE CASCADE,
+        drank_at TIMESTAMP DEFAULT NOW(),
+        context VARCHAR(255),
+        venue VARCHAR(255),
+        rating INTEGER,
+        tasting_notes JSONB,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_drink_logs_bottle ON drink_logs(bottle_id, drank_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_drink_logs_user ON drink_logs(user_id);
+    `);
+
     await sql.end();
 
     return NextResponse.json({
       success: true,
       message: 'All tables created/migrated successfully',
-      tables: ['users', 'locations', 'bottles', 'tasting_sessions', 'tasting_entries'],
+      tables: ['users', 'locations', 'bottles', 'tasting_sessions', 'tasting_entries', 'drink_logs'],
     });
   } catch (error) {
     console.error('Setup error:', error);

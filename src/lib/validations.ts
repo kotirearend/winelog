@@ -57,6 +57,7 @@ export const bottleCreateSchema = z.object({
 
 export const bottleUpdateSchema = bottleCreateSchema.partial().extend({
   producer: z.string().optional(),
+  status: z.enum(['in_cellar', 'consumed', 'archived']).optional(),
   notesShort: z.string().max(500, 'Short notes must be 500 characters or less').optional(),
   notesLong: z.string().optional(),
   tags: z.array(z.string()).optional(),
@@ -71,7 +72,9 @@ export const tastingCreateSchema = z.object({
   notes: z.string().optional(),
 });
 
-export const tastingUpdateSchema = tastingCreateSchema.partial();
+export const tastingUpdateSchema = tastingCreateSchema.partial().extend({
+  summary: z.string().optional(),
+});
 
 // Tasting entry schemas
 export const tastingEntryCreateSchema = z
@@ -127,6 +130,21 @@ export const tastingEntryScoreSchema = z.object({
   palateScore: z.number().int().min(0).max(20).optional(),
   finishScore: z.number().int().min(0).max(20).optional(),
   balanceScore: z.number().int().min(0).max(20).optional(),
+});
+
+// Drink log schema
+export const drinkLogCreateSchema = z.object({
+  drankAt: z.string().optional(),
+  context: z.string().optional(),
+  venue: z.string().optional(),
+  rating: z.number().int().min(0).max(100).optional(),
+  tastingNotes: z.record(z.string()).optional(),
+  notes: z.string().optional(),
+});
+
+// Tasting session summary update
+export const tastingSessionSummarySchema = z.object({
+  summary: z.string().optional(),
 });
 
 // Save to cellar schema

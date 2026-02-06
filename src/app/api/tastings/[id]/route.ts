@@ -45,6 +45,7 @@ export async function GET(
         finishScore: tastingEntries.finishScore,
         balanceScore: tastingEntries.balanceScore,
         totalScore: tastingEntries.totalScore,
+        tastingNotes: tastingEntries.tastingNotes,
         notesShort: tastingEntries.notesShort,
         notesLong: tastingEntries.notesLong,
         tags: tastingEntries.tags,
@@ -113,7 +114,7 @@ export async function PATCH(
       );
     }
 
-    const { name, tastedAt, venue, participants, notes } = result.data;
+    const { name, tastedAt, venue, participants, notes, summary } = result.data;
 
     const updateData: Record<string, any> = {
       updatedAt: new Date(),
@@ -124,6 +125,7 @@ export async function PATCH(
     if (venue !== undefined) updateData.venue = venue;
     if (participants !== undefined) updateData.participants = participants;
     if (notes !== undefined) updateData.notes = notes;
+    if (summary !== undefined) updateData.summary = summary;
 
     const updatedSession = await db
       .update(tastingSessions)

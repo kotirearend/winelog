@@ -13,7 +13,7 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-// Locations table
+// Locations table (storage locations)
 export const locations = pgTable('locations', {
   id: uuid('id').primaryKey().default(() => randomUUID()),
   userId: uuid('user_id').notNull().references(() => users.id),
@@ -33,14 +33,19 @@ export const bottles = pgTable('bottles', {
   grapes: jsonb('grapes').$type<string[]>(),
   country: varchar('country', { length: 255 }),
   region: varchar('region', { length: 255 }),
+  // Status: in_cellar, consumed, archived
+  status: varchar('status', { length: 20 }).default('in_cellar').notNull(),
+  // Storage location
+  locationId: uuid('location_id').references(() => locations.id),
+  subLocationText: varchar('sub_location_text', { length: 255 }),
+  // Purchase info
   purchaseDate: date('purchase_date'),
   purchaseSourceType: varchar('purchase_source_type', { length: 20 }),
   purchaseSourceName: varchar('purchase_source_name', { length: 255 }),
   priceAmount: numeric('price_amount', { precision: 10, scale: 2 }),
   priceCurrency: char('price_currency', { length: 3 }),
   quantity: integer('quantity').default(1).notNull(),
-  locationId: uuid('location_id').references(() => locations.id),
-  subLocationText: varchar('sub_location_text', { length: 255 }),
+  // Notes
   notesShort: varchar('notes_short', { length: 500 }),
   notesLong: text('notes_long'),
   tags: jsonb('tags').$type<string[]>(),
@@ -57,6 +62,7 @@ export const tastingSessions = pgTable('tasting_sessions', {
   venue: varchar('venue', { length: 255 }),
   participants: text('participants'),
   notes: text('notes'),
+  summary: text('summary'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -83,11 +89,26 @@ export const tastingEntries = pgTable('tasting_entries', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
+// Drink log table - when you drink/taste a specific bottle
+export const drinkLogs = pgTable('drink_logs', {
+  id: uuid('id').primaryKey().default(() => randomUUID()),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  bottleId: uuid('bottle_id').notNull().references(() => bottles.id),
+  drankAt: timestamp('drank_at').defaultNow(),
+  context: varchar('context', { length: 255 }),
+  venue: varchar('venue', { length: 255 }),
+  rating: integer('rating'),
+  tastingNotes: jsonb('tasting_notes').$type<Record<string, unknown>>(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   locations: many(locations),
   bottles: many(bottles),
   tastingSessions: many(tastingSessions),
+  drinkLogs: many(drinkLogs),
 }));
 
 export const locationsRelations = relations(locations, ({ one, many }) => ({
@@ -108,6 +129,7 @@ export const bottlesRelations = relations(bottles, ({ one, many }) => ({
     references: [locations.id],
   }),
   tastingEntries: many(tastingEntries),
+  drinkLogs: many(drinkLogs),
 }));
 
 export const tastingSessionsRelations = relations(tastingSessions, ({ one, many }) => ({
@@ -125,6 +147,17 @@ export const tastingEntriesRelations = relations(tastingEntries, ({ one }) => ({
   }),
   bottle: one(bottles, {
     fields: [tastingEntries.bottleId],
+    references: [bottles.id],
+  }),
+}));
+
+export const drinkLogsRelations = relations(drinkLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [drinkLogs.userId],
+    references: [users.id],
+  }),
+  bottle: one(bottles, {
+    fields: [drinkLogs.bottleId],
     references: [bottles.id],
   }),
 }));

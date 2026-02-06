@@ -26,6 +26,7 @@ interface Bottle {
   grapes?: string[];
   country?: string;
   region?: string;
+  status?: string;
   photoUrl?: string;
   quantity: number;
   locationId?: string;
@@ -40,6 +41,7 @@ export default function BottlesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("in_cellar");
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
 
   const fetchLocations = useCallback(async () => {
@@ -55,7 +57,7 @@ export default function BottlesPage() {
   const fetchBottles = useCallback(async () => {
     try {
       setIsLoading(true);
-      const params = new URLSearchParams({ inStock: "true" });
+      const params = new URLSearchParams();
 
       if (search) {
         params.append("q", search);
@@ -66,7 +68,14 @@ export default function BottlesPage() {
       }
 
       const data = await api.get(`/bottles?${params.toString()}`);
-      setBottles(Array.isArray(data) ? data : data.data || []);
+      let list = Array.isArray(data) ? data : data.data || [];
+
+      // Filter by status client-side
+      if (statusFilter !== "all") {
+        list = list.filter((b: Bottle) => (b.status || "in_cellar") === statusFilter);
+      }
+
+      setBottles(list);
       setError(null);
     } catch (err) {
       console.error("Failed to fetch bottles:", err);
@@ -75,7 +84,7 @@ export default function BottlesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [search, selectedLocationId]);
+  }, [search, selectedLocationId, statusFilter]);
 
   useEffect(() => {
     fetchLocations();
@@ -124,6 +133,30 @@ export default function BottlesPage() {
           onChangeDebounced={setSearch}
         />
 
+        {/* Status filter tabs */}
+        <div className="flex gap-1 bg-[#F5F1EB] p-1 rounded-xl">
+          {[
+            { value: "in_cellar", label: "In Cellar" },
+            { value: "consumed", label: "Consumed" },
+            { value: "archived", label: "Archived" },
+            { value: "all", label: "All" },
+          ].map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setStatusFilter(tab.value)}
+              className={cn(
+                "flex-1 py-2.5 px-3 text-sm font-semibold rounded-lg transition-all duration-200",
+                statusFilter === tab.value
+                  ? "bg-white text-[#7C2D36] shadow-sm"
+                  : "text-[#6B7280] hover:text-[#1A1A1A]"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Location filter chips */}
         <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
           <button
             onClick={() => handleFilterChange(null)}

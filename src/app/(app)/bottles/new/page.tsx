@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronUp, Globe, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Globe, MapPin, Plus, X } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,14 @@ export default function AddBottlePage() {
   const [country, setCountry] = useState("");
   const [region, setRegion] = useState("");
 
+  // Storage location state
+  interface Location { id: string; name: string; }
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [selectedLocationId, setSelectedLocationId] = useState<string>("");
+  const [showAddLocation, setShowAddLocation] = useState(false);
+  const [newLocationName, setNewLocationName] = useState("");
+  const [subLocation, setSubLocation] = useState("");
+
   // Form state — more details
   const [purchaseDate, setPurchaseDate] = useState("");
   const [purchaseSource, setPurchaseSource] = useState<string>("");
@@ -51,6 +59,22 @@ export default function AddBottlePage() {
 
   const producerInputRef = useRef<HTMLInputElement>(null);
   const grapeInputRef = useRef<HTMLInputElement>(null);
+
+  const fetchLocations = useCallback(async () => {
+    try {
+      const data = await api.get("/locations");
+      const list = Array.isArray(data) ? data : data.data || [];
+      setLocations(list);
+      const lastId = localStorage.getItem("lastUsedLocationId");
+      if (lastId && list.some((l: Location) => l.id === lastId)) {
+        setSelectedLocationId(lastId);
+      } else if (list.length > 0) {
+        setSelectedLocationId(list[0].id);
+      }
+    } catch (err) {
+      console.error("Failed to fetch locations:", err);
+    }
+  }, []);
 
   const fetchUserSettings = useCallback(async () => {
     try {
@@ -65,8 +89,9 @@ export default function AddBottlePage() {
   }, []);
 
   useEffect(() => {
+    fetchLocations();
     fetchUserSettings();
-  }, [fetchUserSettings]);
+  }, [fetchLocations, fetchUserSettings]);
 
   useEffect(() => {
     producerInputRef.current?.focus();
@@ -144,6 +169,16 @@ export default function AddBottlePage() {
         photoUrl = await uploadPhoto(selectedFile);
       }
 
+      // Handle new location creation if needed
+      let finalLocationId = selectedLocationId;
+      if (!selectedLocationId && newLocationName.trim()) {
+        const newLoc = await api.post("/locations", { name: newLocationName.trim() });
+        finalLocationId = newLoc.id;
+      }
+      if (finalLocationId) {
+        localStorage.setItem("lastUsedLocationId", finalLocationId);
+      }
+
       const bottleData: Record<string, unknown> = {
         name: name.trim(),
         quantity: parseInt(quantity) || 1,
@@ -155,6 +190,8 @@ export default function AddBottlePage() {
       if (grapes.length > 0) bottleData.grapes = grapes;
       if (country.trim()) bottleData.country = country.trim();
       if (region.trim()) bottleData.region = region.trim();
+      if (finalLocationId) bottleData.locationId = finalLocationId;
+      if (subLocation.trim()) bottleData.subLocationText = subLocation.trim();
       if (purchaseDate) bottleData.purchaseDate = purchaseDate;
       if (purchaseSource) bottleData.purchaseSourceType = purchaseSource.toUpperCase();
       if (purchaseSourceName) bottleData.purchaseSourceName = purchaseSourceName;
@@ -309,6 +346,69 @@ export default function AddBottlePage() {
             onChange={(e) => setRegion(e.target.value)}
           />
         </div>
+
+        {/* Storage Location */}
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-semibold text-[#1A1A1A] flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-[#7C2D36]" />
+            Storage Location
+          </label>
+
+          {!showAddLocation ? (
+            <div className="flex gap-2">
+              <select
+                value={selectedLocationId}
+                onChange={(e) => setSelectedLocationId(e.target.value)}
+                className="flex-1 h-11 rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-2 text-sm text-[#1A1A1A] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20"
+              >
+                <option value="">No location</option>
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </option>
+                ))}
+              </select>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAddLocation(true)}
+                className="rounded-xl"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                placeholder="New location name"
+                value={newLocationName}
+                onChange={(e) => setNewLocationName(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => { setShowAddLocation(false); setNewLocationName(""); }}
+                className="rounded-xl"
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Sub-location */}
+        {selectedLocationId && (
+          <div>
+            <Input
+              label="Shelf / Bin"
+              placeholder="e.g., Shelf 3, Bottom right"
+              value={subLocation}
+              onChange={(e) => setSubLocation(e.target.value)}
+            />
+          </div>
+        )}
 
         {/* More Details Toggle */}
         <button

@@ -52,6 +52,7 @@ interface TastingSession {
   venue?: string;
   participants?: string;
   notes?: string;
+  summary?: string;
   entries?: TastingEntry[];
 }
 
@@ -161,6 +162,8 @@ export default function TastingDetailPage() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [isAddingEntry, setIsAddingEntry] = useState(false);
   const [sessionInfoExpanded, setSessionInfoExpanded] = useState(false);
+  const [sessionSummary, setSessionSummary] = useState("");
+  const [isSavingSummary, setIsSavingSummary] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const fetchTasting = useCallback(async () => {
@@ -168,6 +171,7 @@ export default function TastingDetailPage() {
       setIsLoading(true);
       const data = await api.get(`/tastings/${id}`);
       setTasting(data);
+      setSessionSummary(data.summary || "");
       setError(null);
     } catch (err) {
       console.error("Failed to fetch tasting:", err);
@@ -322,6 +326,18 @@ export default function TastingDetailPage() {
     }
   };
 
+  const handleSaveSummary = async () => {
+    try {
+      setIsSavingSummary(true);
+      await api.patch(`/tastings/${id}`, { summary: sessionSummary });
+      setTasting((prev) => prev ? { ...prev, summary: sessionSummary } : prev);
+    } catch (err) {
+      console.error("Failed to save summary:", err);
+    } finally {
+      setIsSavingSummary(false);
+    }
+  };
+
   const downloadExport = async (format: "csv" | "pdf") => {
     try {
       const res = await api.fetch(`/tastings/${id}/export/${format}`);
@@ -410,6 +426,28 @@ export default function TastingDetailPage() {
                   <p className="text-sm text-[#1A1A1A]">{tasting.notes}</p>
                 </div>
               )}
+
+              {/* Session Summary */}
+              <div className="pt-3 border-t border-[#E5E1DB]">
+                <p className="text-xs font-medium text-[#6B7280] uppercase mb-2">Session Summary</p>
+                <p className="text-xs text-[#6B7280] mb-2">What stood out? Winners? Themes?</p>
+                <textarea
+                  placeholder="Write your session summary..."
+                  value={sessionSummary}
+                  onChange={(e) => setSessionSummary(e.target.value)}
+                  className="flex min-h-24 w-full rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-3 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20"
+                />
+                <Button
+                  variant="gold"
+                  onClick={handleSaveSummary}
+                  isLoading={isSavingSummary}
+                  disabled={isSavingSummary}
+                  className="mt-2 rounded-xl"
+                  size="sm"
+                >
+                  Save Summary
+                </Button>
+              </div>
             </div>
           )}
         </div>
