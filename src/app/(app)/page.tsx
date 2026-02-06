@@ -6,48 +6,53 @@ import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Loading } from "@/components/ui/loading";
-import { Plus, Wine, ClipboardList } from "lucide-react";
+import { Plus, Wine, ClipboardList, ChevronRight } from "lucide-react";
 
 interface Bottle {
   id: string;
   name: string;
-  locationId: string;
+  producer?: string;
+  vintage?: number;
+  country?: string;
+  region?: string;
+  grapes?: string[];
+  status?: string;
   photoUrl?: string;
+  quantity: number;
+  priceAmount?: string;
+  priceCurrency?: string;
 }
 
 interface Tasting {
   id: string;
   name: string;
   tastedAt: string;
-  entryCount?: number;
+  venue?: string;
+  notes?: string;
 }
 
 export default function HomePage() {
   const { user } = useAuth();
-  const [bottles, setBottles] = useState<Bottle[]>([]);
+  const [allBottles, setAllBottles] = useState<Bottle[]>([]);
   const [tastings, setTastings] = useState<Tasting[]>([]);
   const [bottlesLoading, setBottlesLoading] = useState(true);
   const [tastingsLoading, setTastingsLoading] = useState(true);
-  const [bottlesError, setBottlesError] = useState("");
-  const [tastingsError, setTastingsError] = useState("");
 
   useEffect(() => {
     const fetchBottles = async () => {
       try {
         setBottlesLoading(true);
-        const data = await api.get("/bottles?inStock=true");
-        setBottles(data.data?.slice(0, 5) || []);
+        const data = await api.get("/bottles");
+        const list = Array.isArray(data) ? data : data.data || [];
+        setAllBottles(list);
       } catch (error) {
         console.error("Failed to fetch bottles:", error);
-        setBottlesError("Failed to load bottles");
       } finally {
         setBottlesLoading(false);
       }
     };
-
     fetchBottles();
   }, []);
 
@@ -56,25 +61,29 @@ export default function HomePage() {
       try {
         setTastingsLoading(true);
         const data = await api.get("/tastings");
-        setTastings(data.data?.slice(0, 5) || []);
+        const list = Array.isArray(data) ? data : data.data || [];
+        setTastings(list);
       } catch (error) {
         console.error("Failed to fetch tastings:", error);
-        setTastingsError("Failed to load tastings");
       } finally {
         setTastingsLoading(false);
       }
     };
-
     fetchTastings();
   }, []);
 
+  // Compute stats from full list
+  const inCellarBottles = allBottles.filter((b) => (b.status || "in_cellar") === "in_cellar");
+  const totalBottlesInStock = inCellarBottles.reduce((sum, b) => sum + (b.quantity || 0), 0);
+  const recentBottles = allBottles.slice(0, 5);
+  const recentTastings = tastings.slice(0, 5);
+
   const formatDate = (dateString: string) => {
     try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
+      return new Date(dateString).toLocaleDateString("en-GB", {
         day: "numeric",
+        month: "short",
+        year: "numeric",
       });
     } catch {
       return dateString;
@@ -82,41 +91,35 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-var(--cream) to-white">
-      {/* Premium Hero Section */}
-      <div className="wine-gradient text-white px-4 pt-8 pb-12">
+    <div className="min-h-screen bg-[#FDFBF7]">
+      {/* Hero */}
+      <div className="bg-gradient-to-br from-[#7C2D36] via-[#5C1F28] to-[#3A0F18] text-white px-4 pt-8 pb-12">
         <div className="max-w-4xl mx-auto">
-          <div className="space-y-2 mb-8">
-            <h1 className="text-4xl font-bold tracking-tight">
-              Welcome back, {user?.name}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold tracking-tight">
+              Welcome back, {user?.name?.split(" ")[0]}
             </h1>
-            <p className="text-white/80 text-lg">
-              Explore your premium collection
-            </p>
+            <p className="text-white/60 text-sm mt-1">Your wine collection at a glance</p>
           </div>
 
-          {/* Stats Row */}
+          {/* Stats */}
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <Card variant="elevated" className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4">
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="text-3xl font-bold text-white mb-1">
-                  {bottles.length}
-                </div>
-                <div className="text-white/70 text-sm">Bottles in Stock</div>
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 text-center">
+              <div className="text-3xl font-bold text-white">
+                {bottlesLoading ? "—" : totalBottlesInStock}
               </div>
-            </Card>
-            <Card variant="elevated" className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4">
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="text-3xl font-bold text-white mb-1">
-                  {tastings.length}
-                </div>
-                <div className="text-white/70 text-sm">Tastings</div>
+              <div className="text-white/60 text-xs mt-0.5">Bottles in Cellar</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 text-center">
+              <div className="text-3xl font-bold text-white">
+                {tastingsLoading ? "—" : tastings.length}
               </div>
-            </Card>
+              <div className="text-white/60 text-xs mt-0.5">Tasting Sessions</div>
+            </div>
           </div>
 
-          {/* Quick Add Button */}
-          <Link href="/bottles/new" className="block w-full">
+          {/* Quick Add */}
+          <Link href="/bottles/new" className="block">
             <Button variant="gold" className="w-full h-12 text-base font-semibold rounded-xl flex items-center justify-center gap-2 shadow-lg">
               <Plus className="w-5 h-5" />
               Quick Add Bottle
@@ -125,144 +128,134 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Content Section */}
-      <div className="max-w-4xl mx-auto px-4 py-8 pb-24 space-y-10">
-        {/* Recent Bottles Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-[#1A1A1A] flex items-center gap-2">
-              <Wine className="w-6 h-6 text-[#7C2D36]" />
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-4 py-6 pb-28 space-y-8">
+
+        {/* Recent Bottles */}
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-[#1A1A1A] flex items-center gap-2">
+              <Wine className="w-5 h-5 text-[#7C2D36]" />
               Recent Bottles
             </h2>
-            <Link href="/bottles" className="text-[#D4A847] hover:text-[#B8860B] text-sm font-semibold">
+            <Link href="/bottles" className="text-[#D4A847] text-sm font-semibold">
               View all
             </Link>
           </div>
 
           {bottlesLoading ? (
-            <div className="flex justify-center py-12">
-              <Loading />
-            </div>
-          ) : bottlesError ? (
-            <Card variant="outlined" className="rounded-2xl p-4 border-red-200 bg-red-50">
-              <p className="text-sm text-red-700">{bottlesError}</p>
-            </Card>
-          ) : bottles.length === 0 ? (
+            <Loading />
+          ) : recentBottles.length === 0 ? (
             <EmptyState
-              icon={<Wine className="w-12 h-12" />}
+              icon={<Wine className="w-10 h-10" />}
               title="No bottles yet"
-              description="Start building your wine collection by adding your first bottle"
-              action={{
-                label: "Add Bottle",
-                onClick: () => (window.location.href = "/bottles/new"),
-              }}
+              description="Add your first bottle to start tracking"
+              action={{ label: "Add Bottle", onClick: () => (window.location.href = "/bottles/new") }}
             />
           ) : (
-            <div className="grid gap-3">
-              {bottles.map((bottle) => (
+            <div className="space-y-2">
+              {recentBottles.map((bottle) => (
                 <Link key={bottle.id} href={`/bottles/${bottle.id}`}>
                   <Card
                     variant="elevated"
-                    className="card-hover rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer border border-[#E5E1DB]"
+                    className="rounded-2xl overflow-hidden hover:shadow-md transition-all active:scale-[0.98] cursor-pointer"
                   >
-                    <div className="flex items-center gap-4 p-4">
-                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#FDFBF7] to-[#F5F1EB] flex items-center justify-center flex-shrink-0 border border-[#E5E1DB]">
-                        {bottle.photoUrl ? (
-                          <img
-                            src={bottle.photoUrl}
-                            alt={bottle.name}
-                            className="w-full h-full rounded-xl object-cover"
-                          />
-                        ) : (
-                          <Wine className="w-8 h-8 text-[#7C2D36]" />
-                        )}
+                    <div className="flex">
+                      {/* Photo or accent */}
+                      {bottle.photoUrl ? (
+                        <img
+                          src={bottle.photoUrl}
+                          alt={bottle.name}
+                          className="w-16 h-auto object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-1.5 flex-shrink-0 bg-gradient-to-b from-[#7C2D36] to-[#D4A847]" />
+                      )}
+
+                      <div className="flex-1 min-w-0 p-3.5 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          {bottle.producer && (
+                            <p className="text-[10px] font-bold text-[#7C2D36] uppercase tracking-widest truncate">
+                              {bottle.producer}
+                            </p>
+                          )}
+                          <h3 className="font-semibold text-sm text-[#1A1A1A] truncate">
+                            {bottle.name}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {bottle.vintage && (
+                              <span className="text-xs font-medium text-[#7C2D36]">{bottle.vintage}</span>
+                            )}
+                            {bottle.country && (
+                              <span className="text-xs text-[#6B7280]">
+                                {bottle.country}{bottle.region ? ` · ${bottle.region}` : ""}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-[#C4B8A8] flex-shrink-0" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-[#1A1A1A] text-base truncate">
-                          {bottle.name}
-                        </h3>
-                        <p className="text-sm text-[#6B7280] mt-1">
-                          In your collection
-                        </p>
-                      </div>
-                      <div className="text-[#D4A847] text-xl">→</div>
                     </div>
                   </Card>
                 </Link>
               ))}
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Recent Tastings Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-[#1A1A1A] flex items-center gap-2">
-              <ClipboardList className="w-6 h-6 text-[#7C2D36]" />
+        {/* Recent Tastings */}
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-[#1A1A1A] flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-[#7C2D36]" />
               Recent Tastings
             </h2>
-            <Link href="/tastings" className="text-[#D4A847] hover:text-[#B8860B] text-sm font-semibold">
+            <Link href="/tastings" className="text-[#D4A847] text-sm font-semibold">
               View all
             </Link>
           </div>
 
           {tastingsLoading ? (
-            <div className="flex justify-center py-12">
-              <Loading />
-            </div>
-          ) : tastingsError ? (
-            <Card variant="outlined" className="rounded-2xl p-4 border-red-200 bg-red-50">
-              <p className="text-sm text-red-700">{tastingsError}</p>
-            </Card>
-          ) : tastings.length === 0 ? (
+            <Loading />
+          ) : recentTastings.length === 0 ? (
             <EmptyState
-              icon={<ClipboardList className="w-12 h-12" />}
+              icon={<ClipboardList className="w-10 h-10" />}
               title="No tastings yet"
-              description="Create your first tasting to record your wine experiences"
-              action={{
-                label: "Start Tasting",
-                onClick: () => (window.location.href = "/tastings"),
-              }}
+              description="Create a tasting session to start scoring wines"
+              action={{ label: "Start Tasting", onClick: () => (window.location.href = "/tastings/new") }}
             />
           ) : (
-            <div className="grid gap-3">
-              {tastings.map((tasting) => (
+            <div className="space-y-2">
+              {recentTastings.map((tasting) => (
                 <Link key={tasting.id} href={`/tastings/${tasting.id}`}>
                   <Card
                     variant="elevated"
-                    className="card-hover rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer border border-[#E5E1DB]"
+                    className="rounded-2xl p-4 hover:shadow-md transition-all active:scale-[0.98] cursor-pointer"
                   >
-                    <div className="flex items-center justify-between p-5">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-[#1A1A1A] text-base mb-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-sm text-[#1A1A1A] truncate">
                           {tasting.name}
                         </h3>
-                        <div className="flex items-center gap-3 text-sm">
-                          <p className="text-[#6B7280]">
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs text-[#6B7280]">
                             {formatDate(tasting.tastedAt)}
-                          </p>
-                          {tasting.entryCount && (
-                            <Badge variant="secondary" className="text-xs">
-                              {tasting.entryCount} {tasting.entryCount === 1 ? "entry" : "entries"}
-                            </Badge>
+                          </span>
+                          {tasting.venue && (
+                            <span className="text-xs text-[#9CA3AF]">
+                              · {tasting.venue}
+                            </span>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 ml-4 flex-shrink-0">
-                        {tasting.entryCount && (
-                          <Badge variant="score" className="text-xs">
-                            {Math.min(tasting.entryCount, 5)}★
-                          </Badge>
-                        )}
-                        <div className="text-[#D4A847] text-xl">→</div>
-                      </div>
+                      <ChevronRight className="w-4 h-4 text-[#C4B8A8] flex-shrink-0" />
                     </div>
                   </Card>
                 </Link>
               ))}
             </div>
           )}
-        </div>
+        </section>
       </div>
     </div>
   );
