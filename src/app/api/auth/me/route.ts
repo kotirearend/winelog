@@ -15,6 +15,7 @@ export async function GET(request: Request) {
         name: users.name,
         defaultCurrency: users.defaultCurrency,
         beverageType: users.beverageType,
+        scoringMode: users.scoringMode,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -56,6 +57,7 @@ export async function PATCH(request: Request) {
     if (body.defaultCurrency !== undefined) updateData.defaultCurrency = body.defaultCurrency;
     if (body.currency !== undefined) updateData.defaultCurrency = body.currency;
     if (body.beverageType !== undefined) updateData.beverageType = body.beverageType;
+    if (body.scoringMode !== undefined) updateData.scoringMode = body.scoringMode;
 
     const updated = await db
       .update(users)
@@ -67,6 +69,7 @@ export async function PATCH(request: Request) {
         name: users.name,
         defaultCurrency: users.defaultCurrency,
         beverageType: users.beverageType,
+        scoringMode: users.scoringMode,
         createdAt: users.createdAt,
       });
 

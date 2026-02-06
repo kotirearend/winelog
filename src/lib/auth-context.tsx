@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { api } from "./api-client";
 
 export type BeverageType = "wine" | "beer";
+export type ScoringMode = "casual" | "wanker";
 
 export interface User {
   id: string;
@@ -11,13 +12,16 @@ export interface User {
   name: string;
   defaultCurrency: string;
   beverageType?: BeverageType;
+  scoringMode?: ScoringMode;
 }
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   beverageType: BeverageType;
+  scoringMode: ScoringMode;
   setBeverageType: (type: BeverageType) => void;
+  setScoringMode: (mode: ScoringMode) => void;
   login: (email: string, password: string) => Promise<void>;
   signup: (
     email: string,
@@ -34,10 +38,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [beverageType, setBeverageTypeState] = useState<BeverageType>("wine");
+  const [scoringMode, setScoringModeState] = useState<ScoringMode>("casual");
 
   const setBeverageType = async (type: BeverageType) => {
     setBeverageTypeState(type);
-    // Persist to user profile
     if (user) {
       const updated = { ...user, beverageType: type };
       setUser(updated);
@@ -46,6 +50,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await api.patch("/auth/me", { beverageType: type });
       } catch (err) {
         console.error("Failed to save beverage type:", err);
+      }
+    }
+  };
+
+  const setScoringMode = async (mode: ScoringMode) => {
+    setScoringModeState(mode);
+    if (user) {
+      const updated = { ...user, scoringMode: mode };
+      setUser(updated);
+      localStorage.setItem("winelog_user", JSON.stringify(updated));
+      try {
+        await api.patch("/auth/me", { scoringMode: mode });
+      } catch (err) {
+        console.error("Failed to save scoring mode:", err);
       }
     }
   };
@@ -60,6 +78,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(parsed);
           if (parsed.beverageType) {
             setBeverageTypeState(parsed.beverageType);
+          }
+          if (parsed.scoringMode) {
+            setScoringModeState(parsed.scoringMode);
           }
         }
       } catch (error) {
@@ -84,6 +105,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData);
       if (userData.beverageType) {
         setBeverageTypeState(userData.beverageType);
+      }
+      if (userData.scoringMode) {
+        setScoringModeState(userData.scoringMode);
       }
     } catch (error) {
       throw error;
@@ -128,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, beverageType, setBeverageType, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, beverageType, scoringMode, setBeverageType, setScoringMode, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );

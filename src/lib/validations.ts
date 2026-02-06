@@ -145,6 +145,14 @@ export const tastingEntryScoreSchema = z.object({
     creaminess: z.string().optional(),
     // Overall
     overallImpression: z.string().optional(),
+    // === CASUAL MODE ===
+    casualLooks: z.string().optional(),
+    casualSmell: z.string().optional(),
+    casualTaste: z.string().optional(),
+    casualDrinkability: z.string().optional(),
+    casualValue: z.string().optional(),
+    casualBuyAgain: z.string().optional(),
+    casualVibes: z.string().optional(),
   }).optional(),
   // Free text notes
   notesShort: z.string().max(500, 'Short notes must be 500 characters or less').optional(),

@@ -2,13 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Edit2, Check, X, LogOut, Wine, Beer } from "lucide-react";
+import { Plus, Edit2, Check, X, LogOut, Wine, Beer, GraduationCap, Smile } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
-import { useAuth, BeverageType } from "@/lib/auth-context";
+import { useAuth, BeverageType, ScoringMode } from "@/lib/auth-context";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +27,7 @@ interface UserData {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { beverageType, setBeverageType } = useAuth();
+  const { beverageType, scoringMode, setBeverageType, setScoringMode } = useAuth();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -214,6 +214,58 @@ export default function SettingsPage() {
                   isBeer ? "text-white/70" : "text-[#6B7280]"
                 )}>
                   BJCP Scoring
+                </span>
+              </button>
+            </div>
+          </Card>
+        </div>
+
+        {/* Scoring Mode Section */}
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-1 w-1 rounded-full bg-gold-500"></div>
+            <h2 className="text-lg font-semibold text-wine-950">Scoring Mode</h2>
+          </div>
+
+          <Card variant="elevated" className="p-6 rounded-2xl">
+            <p className="text-sm text-wine-700 font-medium mb-4">
+              How deep do you want to go with your tasting notes?
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setScoringMode("casual")}
+                className={cn(
+                  "flex flex-col items-center gap-2 p-5 rounded-2xl border-2 transition-all duration-200",
+                  scoringMode === "casual"
+                    ? "border-[#22C55E] bg-[#22C55E] text-white shadow-lg shadow-[#22C55E]/20"
+                    : "border-[#E5E1DB] bg-white text-[#1A1A1A] hover:border-[#22C55E]/40 hover:bg-[#F0FDF4]"
+                )}
+              >
+                <Smile className="w-8 h-8" />
+                <span className="text-sm font-bold">Casual</span>
+                <span className={cn(
+                  "text-[10px] text-center leading-tight",
+                  scoringMode === "casual" ? "text-white/70" : "text-[#6B7280]"
+                )}>
+                  Quick &amp; easy vibes
+                </span>
+              </button>
+              <button
+                onClick={() => setScoringMode("wanker")}
+                className={cn(
+                  "flex flex-col items-center gap-2 p-5 rounded-2xl border-2 transition-all duration-200",
+                  scoringMode === "wanker"
+                    ? "border-[#7C2D36] bg-[#7C2D36] text-white shadow-lg shadow-[#7C2D36]/20"
+                    : "border-[#E5E1DB] bg-white text-[#1A1A1A] hover:border-[#7C2D36]/40 hover:bg-[#FDF2F4]"
+                )}
+              >
+                <GraduationCap className="w-8 h-8" />
+                <span className="text-sm font-bold">Wanker</span>
+                <span className={cn(
+                  "text-[10px] text-center leading-tight",
+                  scoringMode === "wanker" ? "text-white/70" : "text-[#6B7280]"
+                )}>
+                  Full WSET / BJCP
                 </span>
               </button>
             </div>

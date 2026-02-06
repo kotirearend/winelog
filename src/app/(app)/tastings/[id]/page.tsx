@@ -100,6 +100,14 @@ interface ExpandedEntryState {
     warmth?: string;
     creaminess?: string;
     overallImpression?: string;
+    // Casual mode fields
+    casualLooks?: string;
+    casualSmell?: string;
+    casualTaste?: string;
+    casualDrinkability?: string;
+    casualValue?: string;
+    casualBuyAgain?: string;
+    casualVibes?: string;
   };
   notesLong: string;
 }
@@ -115,6 +123,12 @@ function getQualityLabel(qualityLevel?: string): string {
     // Beer-specific
     problematic: "Problematic",
     average: "Average",
+    // Casual-specific
+    nah: "Nah",
+    "it's alright": "It's Alright",
+    solid: "Solid",
+    "proper good": "Proper Good",
+    elite: "Elite",
   };
   return labels[qualityLevel || ""] || "Not Rated";
 }
@@ -130,6 +144,12 @@ function getQualityColor(qualityLevel?: string): string {
     // Beer-specific
     problematic: "bg-red-100 text-red-800",
     average: "bg-yellow-100 text-yellow-800",
+    // Casual-specific
+    nah: "bg-red-100 text-red-800",
+    "it's alright": "bg-yellow-100 text-yellow-800",
+    solid: "bg-blue-100 text-blue-800",
+    "proper good": "bg-[#D4A847] text-white",
+    elite: "bg-[#7C2D36] text-white",
   };
   return colors[qualityLevel || ""] || "bg-[#E5E1DB] text-[#1A1A1A]";
 }
@@ -175,8 +195,9 @@ export default function TastingDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
-  const { beverageType } = useAuth();
+  const { beverageType, scoringMode } = useAuth();
   const isBeer = beverageType === "beer";
+  const isCasual = scoringMode === "casual";
 
   const [tasting, setTasting] = useState<TastingSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -680,9 +701,105 @@ export default function TastingDetailPage() {
                               </div>
                             </div>
 
-                            {/* === BEER BJCP SCORING === */}
-                            {isBeer ? (
+                            {/* === CASUAL MODE SCORING === */}
+                            {isCasual ? (
                               <>
+                                <div className="border-t border-[#E5E1DB] pt-6">
+                                  <h3 className="text-lg font-bold text-white bg-[#22C55E] px-4 py-2 rounded-lg mb-4">
+                                    {isBeer ? "LOOKS" : "LOOKS"}
+                                  </h3>
+                                  <p className="text-xs text-[#6B7280] mb-3">How&apos;s it looking in the glass?</p>
+                                  <ChipSelect
+                                    options={["rough", "alright", "proper nice", "gorgeous"]}
+                                    value={expandedEntry.tastingNotes.casualLooks}
+                                    onChange={(v) => setExpandedEntry((prev) => prev ? { ...prev, tastingNotes: { ...prev.tastingNotes, casualLooks: v } } : null)}
+                                  />
+                                </div>
+
+                                <div className="border-t border-[#E5E1DB] pt-6">
+                                  <h3 className="text-lg font-bold text-white bg-[#22C55E] px-4 py-2 rounded-lg mb-4">
+                                    SMELL
+                                  </h3>
+                                  <p className="text-xs text-[#6B7280] mb-3">Give it a sniff — what&apos;s the vibe?</p>
+                                  <ChipSelect
+                                    options={["off-putting", "nowt special", "nice", "lovely", "incredible"]}
+                                    value={expandedEntry.tastingNotes.casualSmell}
+                                    onChange={(v) => setExpandedEntry((prev) => prev ? { ...prev, tastingNotes: { ...prev.tastingNotes, casualSmell: v } } : null)}
+                                  />
+                                </div>
+
+                                <div className="border-t border-[#E5E1DB] pt-6">
+                                  <h3 className="text-lg font-bold text-white bg-[#22C55E] px-4 py-2 rounded-lg mb-4">
+                                    TASTE
+                                  </h3>
+                                  <p className="text-xs text-[#6B7280] mb-3">The important bit — how does it taste?</p>
+                                  <ChipSelect
+                                    options={["rank", "meh", "decent", "banging", "unreal"]}
+                                    value={expandedEntry.tastingNotes.casualTaste}
+                                    onChange={(v) => setExpandedEntry((prev) => prev ? { ...prev, tastingNotes: { ...prev.tastingNotes, casualTaste: v } } : null)}
+                                  />
+                                </div>
+
+                                <div className="border-t border-[#E5E1DB] pt-6">
+                                  <h3 className="text-lg font-bold text-white bg-[#22C55E] px-4 py-2 rounded-lg mb-4">
+                                    DRINKABILITY
+                                  </h3>
+                                  <p className="text-xs text-[#6B7280] mb-3">{isBeer ? "Could you session these?" : "Could you smash a few of these?"}</p>
+                                  <ChipSelect
+                                    options={["one and done", "couple more", "session material", "dangerously moreish"]}
+                                    value={expandedEntry.tastingNotes.casualDrinkability}
+                                    onChange={(v) => setExpandedEntry((prev) => prev ? { ...prev, tastingNotes: { ...prev.tastingNotes, casualDrinkability: v } } : null)}
+                                  />
+                                </div>
+
+                                <div className="border-t border-[#E5E1DB] pt-6">
+                                  <h3 className="text-lg font-bold text-white bg-[#22C55E] px-4 py-2 rounded-lg mb-4">
+                                    VALUE
+                                  </h3>
+                                  <p className="text-xs text-[#6B7280] mb-3">Worth the price tag?</p>
+                                  <ChipSelect
+                                    options={["robbery", "bit steep", "fair enough", "bargain"]}
+                                    value={expandedEntry.tastingNotes.casualValue}
+                                    onChange={(v) => setExpandedEntry((prev) => prev ? { ...prev, tastingNotes: { ...prev.tastingNotes, casualValue: v } } : null)}
+                                  />
+                                </div>
+
+                                <div className="border-t border-[#E5E1DB] pt-6">
+                                  <h3 className="text-lg font-bold text-white bg-[#22C55E] px-4 py-2 rounded-lg mb-4">
+                                    BUY AGAIN?
+                                  </h3>
+                                  <p className="text-xs text-[#6B7280] mb-3">Would you get it again?</p>
+                                  <ChipSelect
+                                    options={["no chance", "maybe", "yeah definitely", "buying a case"]}
+                                    value={expandedEntry.tastingNotes.casualBuyAgain}
+                                    onChange={(v) => setExpandedEntry((prev) => prev ? { ...prev, tastingNotes: { ...prev.tastingNotes, casualBuyAgain: v } } : null)}
+                                  />
+                                </div>
+
+                                <div className="border-t border-[#E5E1DB] pt-6">
+                                  <h3 className="text-lg font-bold text-white bg-[#22C55E] px-4 py-2 rounded-lg mb-4">
+                                    THE VERDICT
+                                  </h3>
+                                  <p className="text-xs text-[#6B7280] mb-3">Sum it up — what&apos;s the final word?</p>
+                                  <ChipSelect
+                                    options={["nah", "it's alright", "solid", "proper good", "elite"]}
+                                    value={expandedEntry.tastingNotes.qualityLevel}
+                                    onChange={(v) => setExpandedEntry((prev) => prev ? { ...prev, tastingNotes: { ...prev.tastingNotes, qualityLevel: v } } : null)}
+                                  />
+                                  <div className="mt-4">
+                                    <label className="text-sm font-medium text-[#1A1A1A] block mb-2">Quick Vibes</label>
+                                    <textarea
+                                      placeholder={isBeer ? "What stood out? Would you recommend it to a mate?" : "What stood out? Food pairing? Occasion?"}
+                                      value={expandedEntry.tastingNotes.casualVibes || ""}
+                                      onChange={(e) => setExpandedEntry((prev) => prev ? { ...prev, tastingNotes: { ...prev.tastingNotes, casualVibes: e.target.value } } : null)}
+                                      className="flex min-h-16 w-full rounded-md border border-[#E5E1DB] bg-white px-3 py-2 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-colors focus:outline-none focus:border-[#22C55E] focus:ring-2 focus:ring-[#22C55E] focus:ring-offset-0"
+                                    />
+                                  </div>
+                                </div>
+                              </>
+                            ) : isBeer ? (
+                              <>
+                            {/* === BEER BJCP SCORING === */}
                                 <div className="border-t border-[#E5E1DB] pt-6">
                                   <h3 className="text-lg font-bold text-white bg-[#B45309] px-4 py-2 rounded-lg mb-4">
                                     APPEARANCE
@@ -1502,16 +1619,16 @@ export default function TastingDetailPage() {
                           Score
                         </th>
                         <th className="text-center p-3 font-semibold text-[#6B7280]">
-                          {isBeer ? "Body" : "Body"}
+                          {isCasual ? "Taste" : isBeer ? "Body" : "Body"}
                         </th>
                         <th className="text-center p-3 font-semibold text-[#6B7280]">
-                          {isBeer ? "Bitterness" : "Finish"}
+                          {isCasual ? "Drinkability" : isBeer ? "Bitterness" : "Finish"}
                         </th>
                         <th className="text-center p-3 font-semibold text-[#6B7280]">
-                          {isBeer ? "Carbonation" : "Acidity"}
+                          {isCasual ? "Value" : isBeer ? "Carbonation" : "Acidity"}
                         </th>
                         <th className="text-center p-3 font-semibold text-[#6B7280]">
-                          {isBeer ? "Balance" : "Sweetness"}
+                          {isCasual ? "Buy Again?" : isBeer ? "Balance" : "Sweetness"}
                         </th>
                       </tr>
                     </thead>
@@ -1544,16 +1661,16 @@ export default function TastingDetailPage() {
                               {score || "-"}
                             </td>
                             <td className="p-3 text-center text-[#6B7280]">
-                              {(isBeer ? entry.tastingNotes?.beerBody : entry.tastingNotes?.body) || "-"}
+                              {(isCasual ? entry.tastingNotes?.casualTaste : isBeer ? entry.tastingNotes?.beerBody : entry.tastingNotes?.body) || "-"}
                             </td>
                             <td className="p-3 text-center text-[#6B7280]">
-                              {(isBeer ? entry.tastingNotes?.bitterness : entry.tastingNotes?.finish) || "-"}
+                              {(isCasual ? entry.tastingNotes?.casualDrinkability : isBeer ? entry.tastingNotes?.bitterness : entry.tastingNotes?.finish) || "-"}
                             </td>
                             <td className="p-3 text-center text-[#6B7280]">
-                              {(isBeer ? entry.tastingNotes?.carbonation : entry.tastingNotes?.acidity) || "-"}
+                              {(isCasual ? entry.tastingNotes?.casualValue : isBeer ? entry.tastingNotes?.carbonation : entry.tastingNotes?.acidity) || "-"}
                             </td>
                             <td className="p-3 text-center text-[#6B7280]">
-                              {(isBeer ? entry.tastingNotes?.balance : entry.tastingNotes?.sweetness) || "-"}
+                              {(isCasual ? entry.tastingNotes?.casualBuyAgain : isBeer ? entry.tastingNotes?.balance : entry.tastingNotes?.sweetness) || "-"}
                             </td>
                           </tr>
                         );

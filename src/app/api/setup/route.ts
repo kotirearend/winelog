@@ -145,6 +145,11 @@ export async function GET() {
       ALTER TABLE bottles ADD COLUMN IF NOT EXISTS beverage_type VARCHAR(10) NOT NULL DEFAULT 'wine';
     `);
 
+    // Migration: add scoring_mode to users
+    await sql.unsafe(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS scoring_mode VARCHAR(10) NOT NULL DEFAULT 'casual';
+    `);
+
     await sql.end();
 
     return NextResponse.json({

@@ -50,6 +50,7 @@ export async function POST(request: Request) {
         name: users.name,
         defaultCurrency: users.defaultCurrency,
         beverageType: users.beverageType,
+        scoringMode: users.scoringMode,
         createdAt: users.createdAt,
       });
 

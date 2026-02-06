@@ -10,6 +10,7 @@ export const users = pgTable('users', {
   name: varchar('name', { length: 255 }).notNull(),
   defaultCurrency: char('default_currency', { length: 3 }).default('GBP'),
   beverageType: varchar('beverage_type', { length: 10 }).default('wine').notNull(),
+  scoringMode: varchar('scoring_mode', { length: 10 }).default('casual').notNull(),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
