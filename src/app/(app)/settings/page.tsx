@@ -48,7 +48,7 @@ export default function SettingsPage() {
         // Fetch user
         const userData = await api.get("/auth/me");
         setUser(userData);
-        setSelectedCurrency(userData.currency || "USD");
+        setSelectedCurrency(userData.defaultCurrency || "GBP");
 
         // Fetch locations
         const locationsData = await api.get("/locations");
