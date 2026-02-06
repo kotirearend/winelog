@@ -203,71 +203,72 @@ export default function BottlesPage() {
             }}
           />
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0 lg:grid-cols-3">
             {bottles.map((bottle) => (
               <Card
                 key={bottle.id}
                 variant="elevated"
-                className="card-hover cursor-pointer p-5 rounded-2xl overflow-hidden"
+                className="card-hover cursor-pointer rounded-2xl overflow-hidden active:scale-[0.98] transition-transform"
                 onClick={() => handleBottleClick(bottle.id)}
               >
-                <div className="flex gap-5">
-                  <div className="flex-shrink-0">
-                    {bottle.photoUrl ? (
-                      <img
-                        src={bottle.photoUrl}
-                        alt={bottle.name}
-                        className="w-20 h-20 rounded-xl object-cover bg-cream-dark"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 rounded-xl bg-wine-50 flex items-center justify-center border border-wine-200">
-                        <Wine className="w-10 h-10 text-wine-800" />
-                      </div>
-                    )}
-                  </div>
+                <div className="flex">
+                  {/* Left accent / photo */}
+                  {bottle.photoUrl ? (
+                    <img
+                      src={bottle.photoUrl}
+                      alt={bottle.name}
+                      className="w-24 h-auto object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-2 flex-shrink-0 bg-gradient-to-b from-[#7C2D36] to-[#D4A847] rounded-l-2xl" />
+                  )}
 
-                  <div className="flex-1 min-w-0">
+                  {/* Content */}
+                  <div className="flex-1 min-w-0 p-4">
+                    {/* Producer */}
                     {bottle.producer && (
-                      <p className="text-xs font-semibold text-[#7C2D36] uppercase tracking-wide truncate">
+                      <p className="text-[10px] font-bold text-[#7C2D36] uppercase tracking-widest truncate mb-0.5">
                         {bottle.producer}
                       </p>
                     )}
-                    <h3 className="font-bold text-lg text-[#1A1A1A] truncate mt-0.5">
+
+                    {/* Name */}
+                    <h3 className="font-bold text-base text-[#1A1A1A] leading-tight line-clamp-2">
                       {bottle.name}
                     </h3>
 
-                    <div className="mt-2 flex flex-wrap gap-1.5">
+                    {/* Vintage + Origin line */}
+                    <div className="mt-1.5 flex items-center gap-2 flex-wrap">
                       {bottle.vintage && (
-                        <Badge variant="secondary" className="text-xs bg-[#FCE4E8] text-[#7C2D36] border-0">
+                        <span className="text-xs font-semibold text-[#7C2D36] bg-[#FCE4E8] px-2 py-0.5 rounded-md">
                           {bottle.vintage}
-                        </Badge>
+                        </span>
                       )}
-                      {bottle.country && (
-                        <Badge variant="secondary" className="text-xs bg-[#F5F1EB] text-[#6B7280] border-0">
-                          {bottle.country}
-                        </Badge>
-                      )}
-                      {bottle.region && (
-                        <Badge variant="secondary" className="text-xs bg-[#F5F1EB] text-[#6B7280] border-0">
-                          {bottle.region}
-                        </Badge>
+                      {(bottle.country || bottle.region) && (
+                        <span className="text-xs text-[#6B7280]">
+                          {[bottle.country, bottle.region].filter(Boolean).join(" · ")}
+                        </span>
                       )}
                     </div>
 
+                    {/* Grapes */}
                     {bottle.grapes && bottle.grapes.length > 0 && (
-                      <p className="text-xs text-[#6B7280] mt-2 truncate">
+                      <p className="text-xs text-[#9CA3AF] mt-1 truncate">
                         {bottle.grapes.join(", ")}
                       </p>
                     )}
 
-                    <div className="mt-2 flex items-center gap-3">
-                      {bottle.quantity > 0 && (
-                        <span className="text-xs font-semibold text-[#7C2D36]">
-                          ×{bottle.quantity}
-                        </span>
-                      )}
+                    {/* Bottom row: qty + price */}
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {bottle.quantity > 1 && (
+                          <span className="text-xs font-bold text-[#7C2D36] bg-[#7C2D36]/10 px-2 py-0.5 rounded-full">
+                            ×{bottle.quantity}
+                          </span>
+                        )}
+                      </div>
                       {bottle.priceAmount && (
-                        <span className="text-xs font-semibold text-[#B8860B]">
+                        <span className="text-xs font-bold text-[#D4A847]">
                           {bottle.priceCurrency || "GBP"} {Number(bottle.priceAmount).toFixed(2)}
                         </span>
                       )}
