@@ -67,8 +67,22 @@ export const tastingSessions = pgTable('tasting_sessions', {
   participants: text('participants'),
   notes: text('notes'),
   summary: text('summary'),
+  // Social tasting mode
+  isSocialMode: boolean('is_social_mode').default(false),
+  sessionCode: varchar('session_code', { length: 8 }).unique(),
+  inviteExpiresAt: timestamp('invite_expires_at'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Tasting session guests table (social mode)
+export const tastingSessionGuests = pgTable('tasting_session_guests', {
+  id: uuid('id').primaryKey().default(() => randomUUID()),
+  tastingSessionId: uuid('tasting_session_id').notNull().references(() => tastingSessions.id),
+  guestName: varchar('guest_name', { length: 100 }).notNull(),
+  guestTokenHash: text('guest_token_hash').notNull(),
+  isActive: boolean('is_active').default(true),
+  joinedAt: timestamp('joined_at').defaultNow(),
 });
 
 // Tasting entries table
@@ -79,6 +93,11 @@ export const tastingEntries = pgTable('tasting_entries', {
   adHocName: varchar('ad_hoc_name', { length: 255 }),
   adHocPhotoUrl: text('ad_hoc_photo_url'),
   saveToCellar: boolean('save_to_cellar').default(false),
+  // Guest scoring (social mode) - null means host's entry
+  guestId: uuid('guest_id').references(() => tastingSessionGuests.id),
+  guestName: varchar('guest_name', { length: 100 }),
+  // Reference to the host's original entry this guest entry is based on
+  parentEntryId: uuid('parent_entry_id'),
   appearanceScore: integer('appearance_score'),
   noseScore: integer('nose_score'),
   palateScore: integer('palate_score'),
@@ -143,6 +162,15 @@ export const tastingSessionsRelations = relations(tastingSessions, ({ one, many 
     references: [users.id],
   }),
   tastingEntries: many(tastingEntries),
+  guests: many(tastingSessionGuests),
+}));
+
+export const tastingSessionGuestsRelations = relations(tastingSessionGuests, ({ one, many }) => ({
+  tastingSession: one(tastingSessions, {
+    fields: [tastingSessionGuests.tastingSessionId],
+    references: [tastingSessions.id],
+  }),
+  tastingEntries: many(tastingEntries),
 }));
 
 export const tastingEntriesRelations = relations(tastingEntries, ({ one }) => ({
@@ -153,6 +181,10 @@ export const tastingEntriesRelations = relations(tastingEntries, ({ one }) => ({
   bottle: one(bottles, {
     fields: [tastingEntries.bottleId],
     references: [bottles.id],
+  }),
+  guest: one(tastingSessionGuests, {
+    fields: [tastingEntries.guestId],
+    references: [tastingSessionGuests.id],
   }),
 }));
 

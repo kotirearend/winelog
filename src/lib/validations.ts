@@ -192,6 +192,16 @@ export const saveToCellarSchema = z.object({
     .default(1),
 });
 
+// Social tasting mode schemas
+export const guestJoinSchema = z.object({
+  sessionCode: z.string().min(1, 'Session code is required'),
+  guestName: z.string().min(1, 'Name is required').max(50, 'Name must be 50 characters or less'),
+});
+
+export const socialModeToggleSchema = z.object({
+  enabled: z.boolean(),
+});
+
 // Type exports for use in application
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -203,3 +213,5 @@ export type TastingUpdateInput = z.infer<typeof tastingUpdateSchema>;
 export type TastingEntryCreateInput = z.infer<typeof tastingEntryCreateSchema>;
 export type TastingEntryScoreInput = z.infer<typeof tastingEntryScoreSchema>;
 export type SaveToCellarInput = z.infer<typeof saveToCellarSchema>;
+export type GuestJoinInput = z.infer<typeof guestJoinSchema>;
+export type SocialModeToggleInput = z.infer<typeof socialModeToggleSchema>;

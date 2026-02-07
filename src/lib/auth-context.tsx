@@ -68,23 +68,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // On mount, check if we have stored user info
+  // On mount, validate stored token against the server
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       try {
         const storedUser = localStorage.getItem("winelog_user");
-        if (storedUser) {
-          const parsed = JSON.parse(storedUser);
-          setUser(parsed);
-          if (parsed.beverageType) {
-            setBeverageTypeState(parsed.beverageType);
+        const storedToken = api.getToken();
+
+        if (storedUser && storedToken) {
+          // Validate token with the server to get the REAL user
+          // Use raw fetch to avoid api-client's auto-redirect on 401
+          try {
+            const res = await fetch("/api/auth/me", {
+              headers: { Authorization: `Bearer ${storedToken}` },
+            });
+            if (res.ok) {
+              const serverUser = await res.json();
+              // Use server-returned user data (authoritative)
+              setUser(serverUser);
+              localStorage.setItem("winelog_user", JSON.stringify(serverUser));
+              if (serverUser.beverageType) {
+                setBeverageTypeState(serverUser.beverageType);
+              }
+              if (serverUser.scoringMode) {
+                setScoringModeState(serverUser.scoringMode);
+              }
+            } else {
+              // Token is invalid/expired — clear everything
+              api.clearToken();
+              localStorage.removeItem("winelog_user");
+              setUser(null);
+            }
+          } catch {
+            // Network error — use cached data as fallback
+            const parsed = JSON.parse(storedUser);
+            setUser(parsed);
+            if (parsed.beverageType) setBeverageTypeState(parsed.beverageType);
+            if (parsed.scoringMode) setScoringModeState(parsed.scoringMode);
           }
-          if (parsed.scoringMode) {
-            setScoringModeState(parsed.scoringMode);
-          }
+        } else {
+          // No stored session — clear any stale data
+          api.clearToken();
+          localStorage.removeItem("winelog_user");
         }
       } catch (error) {
         console.error("Failed to restore auth:", error);
+        api.clearToken();
         localStorage.removeItem("winelog_user");
       } finally {
         setIsLoading(false);
@@ -97,6 +126,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
+      // Clear any existing session first
+      api.clearToken();
+      localStorage.removeItem("winelog_user");
+
       const response = await api.post("/auth/login", { email, password });
       const { token, user: userData } = response;
 
@@ -124,6 +157,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ) => {
     setIsLoading(true);
     try {
+      // Clear any existing session first
+      api.clearToken();
+      localStorage.removeItem("winelog_user");
+
       const response = await api.post("/auth/signup", {
         email,
         password,

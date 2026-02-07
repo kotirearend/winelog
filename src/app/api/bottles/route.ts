@@ -15,32 +15,32 @@ export async function GET(request: Request) {
     const inStock = searchParams.get('inStock');
     const beverageType = searchParams.get('beverageType');
 
-    let query = db
-      .select()
-      .from(bottles)
-      .where(eq(bottles.userId, authUser.userId));
+    // Build all conditions - MUST use and() to combine them
+    // Chaining .where() in Drizzle replaces the previous condition!
+    const conditions = [eq(bottles.userId, authUser.userId)];
 
-    // Filter by beverage type
     if (beverageType) {
-      query = query.where(eq(bottles.beverageType, beverageType));
+      conditions.push(eq(bottles.beverageType, beverageType));
     }
 
-    // Apply filters
     if (locationId) {
-      query = query.where(eq(bottles.locationId, locationId));
+      conditions.push(eq(bottles.locationId, locationId));
     }
 
     if (q) {
-      query = query.where(
-        ilike(bottles.name, `%${q}%`)
-      );
+      conditions.push(ilike(bottles.name, `%${q}%`));
     }
 
     if (inStock === 'true') {
-      query = query.where(gt(bottles.quantity, 0));
+      conditions.push(gt(bottles.quantity, 0));
     }
 
-    const result = await query.orderBy(desc(bottles.createdAt));
+    const result = await db
+      .select()
+      .from(bottles)
+      .where(and(...conditions))
+      .orderBy(desc(bottles.createdAt));
+
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof Error && error.message.includes('authorization')) {

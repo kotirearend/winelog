@@ -157,7 +157,7 @@ export default function TastingsPage() {
 
                       <div className="mt-4 flex flex-wrap gap-2">
                         <Badge variant="secondary" className="bg-wine-100 text-wine-800 border-0">
-                          {entries.length} wine{entries.length !== 1 ? "s" : ""}
+                          {entries.length} {isBeer ? "beer" : "wine"}{entries.length !== 1 ? "s" : ""}
                         </Badge>
 
                         {topScore !== null && (

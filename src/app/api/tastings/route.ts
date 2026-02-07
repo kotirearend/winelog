@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, isNull } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { tastingSessions } from '@/lib/schema';
+import { tastingSessions, tastingEntries } from '@/lib/schema';
 import { tastingCreateSchema } from '@/lib/validations';
 import { getAuthUser } from '@/lib/auth';
 
@@ -15,7 +15,37 @@ export async function GET(request: Request) {
       .where(eq(tastingSessions.userId, authUser.userId))
       .orderBy(desc(tastingSessions.tastedAt));
 
-    return NextResponse.json(sessions);
+    // Fetch entries for all sessions to get counts and top scores
+    const sessionIds = sessions.map(s => s.id);
+    let allEntries: { tastingSessionId: string; totalScore: number | null }[] = [];
+    if (sessionIds.length > 0) {
+      allEntries = await db
+        .select({
+          tastingSessionId: tastingEntries.tastingSessionId,
+          totalScore: tastingEntries.totalScore,
+        })
+        .from(tastingEntries)
+        .where(isNull(tastingEntries.guestId)); // Only host entries, not guest entries
+    }
+
+    // Group entries by session
+    const entriesBySession = new Map<string, { totalScore: number | null }[]>();
+    for (const entry of allEntries) {
+      const existing = entriesBySession.get(entry.tastingSessionId) || [];
+      existing.push({ totalScore: entry.totalScore });
+      entriesBySession.set(entry.tastingSessionId, existing);
+    }
+
+    // Attach entries to sessions
+    const sessionsWithEntries = sessions.map(session => ({
+      ...session,
+      entries: (entriesBySession.get(session.id) || []).map(e => ({
+        id: session.id,
+        score: e.totalScore,
+      })),
+    }));
+
+    return NextResponse.json(sessionsWithEntries);
   } catch (error) {
     if (error instanceof Error && error.message.includes('authorization')) {
       return NextResponse.json(

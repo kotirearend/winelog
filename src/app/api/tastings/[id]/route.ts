@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { tastingSessions, tastingEntries, bottles } from '@/lib/schema';
 import { tastingUpdateSchema } from '@/lib/validations';
@@ -59,7 +59,7 @@ export async function GET(
       })
       .from(tastingEntries)
       .leftJoin(bottles, eq(tastingEntries.bottleId, bottles.id))
-      .where(eq(tastingEntries.tastingSessionId, id));
+      .where(and(eq(tastingEntries.tastingSessionId, id), isNull(tastingEntries.guestId)));
 
     return NextResponse.json({
       ...session[0],

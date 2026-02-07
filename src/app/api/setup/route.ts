@@ -150,12 +150,47 @@ export async function GET() {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS scoring_mode VARCHAR(10) NOT NULL DEFAULT 'casual';
     `);
 
+    // Migration: social tasting mode columns on tasting_sessions
+    await sql.unsafe(`
+      ALTER TABLE tasting_sessions ADD COLUMN IF NOT EXISTS is_social_mode BOOLEAN DEFAULT FALSE;
+      ALTER TABLE tasting_sessions ADD COLUMN IF NOT EXISTS session_code VARCHAR(8);
+      ALTER TABLE tasting_sessions ADD COLUMN IF NOT EXISTS invite_expires_at TIMESTAMP;
+    `);
+
+    // Try to add unique constraint on session_code (ignore if exists)
+    try {
+      await sql.unsafe(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_tasting_sessions_code ON tasting_sessions(session_code) WHERE session_code IS NOT NULL;
+      `);
+    } catch { /* index may already exist */ }
+
+    // Create tasting_session_guests table
+    await sql.unsafe(`
+      CREATE TABLE IF NOT EXISTS tasting_session_guests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tasting_session_id UUID NOT NULL REFERENCES tasting_sessions(id) ON DELETE CASCADE,
+        guest_name VARCHAR(100) NOT NULL,
+        guest_token_hash TEXT NOT NULL,
+        is_active BOOLEAN DEFAULT TRUE,
+        joined_at TIMESTAMP DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_tsg_session ON tasting_session_guests(tasting_session_id);
+    `);
+
+    // Migration: add guest columns to tasting_entries
+    await sql.unsafe(`
+      ALTER TABLE tasting_entries ADD COLUMN IF NOT EXISTS guest_id UUID REFERENCES tasting_session_guests(id);
+      ALTER TABLE tasting_entries ADD COLUMN IF NOT EXISTS guest_name VARCHAR(100);
+      ALTER TABLE tasting_entries ADD COLUMN IF NOT EXISTS parent_entry_id UUID;
+    `);
+
     await sql.end();
 
     return NextResponse.json({
       success: true,
       message: 'All tables created/migrated successfully',
-      tables: ['users', 'locations', 'bottles', 'tasting_sessions', 'tasting_entries', 'drink_logs'],
+      tables: ['users', 'locations', 'bottles', 'tasting_sessions', 'tasting_entries', 'drink_logs', 'tasting_session_guests'],
     });
   } catch (error) {
     console.error('Setup error:', error);

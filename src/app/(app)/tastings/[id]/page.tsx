@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Plus, Download, ChevronDown, Wine, Beer, X, Camera } from "lucide-react";
+import { Plus, Download, ChevronDown, Wine, Beer, X, Camera, Share2, Copy, Users, Check, Link, ExternalLink, Eye } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,7 +56,33 @@ interface TastingSession {
   participants?: string;
   notes?: string;
   summary?: string;
+  isSocialMode?: boolean;
+  sessionCode?: string;
+  inviteExpiresAt?: string;
   entries?: TastingEntry[];
+}
+
+interface SocialGuest {
+  id: string;
+  guestName: string;
+  joinedAt: string;
+  isActive: boolean;
+}
+
+interface SocialComparison {
+  entryId: string;
+  wineName: string;
+  producer?: string;
+  vintage?: number;
+  photoUrl?: string;
+  hostScore: number | null;
+  hostNotes?: string;
+  guestScores: {
+    guestId: string;
+    guestName: string;
+    totalScore: number | null;
+    notesShort?: string;
+  }[];
 }
 
 interface ExpandedEntryState {
@@ -204,7 +230,7 @@ export default function TastingDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [activeTab, setActiveTab] = useState<"entries" | "compare">("entries");
+  const [activeTab, setActiveTab] = useState<"entries" | "compare" | "social">("entries");
   const [expandedEntry, setExpandedEntry] = useState<ExpandedEntryState | null>(null);
   const [showAddFromCellar, setShowAddFromCellar] = useState(false);
   const [showAddAdHoc, setShowAddAdHoc] = useState(false);
@@ -222,6 +248,13 @@ export default function TastingDetailPage() {
   const [entryPhoto, setEntryPhoto] = useState<File | null>(null);
   const [entryPhotoPreview, setEntryPhotoPreview] = useState<string | null>(null);
   const entryPhotoInputRef = useRef<HTMLInputElement>(null);
+
+  // Social mode state
+  const [socialToggling, setSocialToggling] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [socialGuests, setSocialGuests] = useState<SocialGuest[]>([]);
+  const [socialComparison, setSocialComparison] = useState<SocialComparison[]>([]);
+  const [loadingSocialResults, setLoadingSocialResults] = useState(false);
 
   const fetchTasting = useCallback(async () => {
     try {
@@ -453,6 +486,43 @@ export default function TastingDetailPage() {
     }
   };
 
+  const handleToggleSocialMode = async () => {
+    if (!tasting) return;
+    setSocialToggling(true);
+    try {
+      const updated = await api.patch(`/tastings/${id}/social-mode`, {
+        enabled: !tasting.isSocialMode,
+      });
+      setTasting((prev) => prev ? { ...prev, ...updated } : prev);
+    } catch (err) {
+      console.error("Failed to toggle social mode:", err);
+      setError("Failed to toggle social mode.");
+    } finally {
+      setSocialToggling(false);
+    }
+  };
+
+  const handleCopyInviteLink = () => {
+    if (!tasting?.sessionCode) return;
+    const link = `${window.location.origin}/join/${tasting.sessionCode}`;
+    navigator.clipboard.writeText(link);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const fetchSocialResults = async () => {
+    setLoadingSocialResults(true);
+    try {
+      const data = await api.get(`/tastings/${id}/social-results`);
+      setSocialGuests(data.guests || []);
+      setSocialComparison(data.comparison || []);
+    } catch (err) {
+      console.error("Failed to fetch social results:", err);
+    } finally {
+      setLoadingSocialResults(false);
+    }
+  };
+
   if (isLoading) {
     return <Loading variant="page" />;
   }
@@ -551,6 +621,88 @@ export default function TastingDetailPage() {
           )}
         </div>
 
+        {/* Social Mode Panel */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-[#E5E1DB]">
+            <div className="flex items-center gap-3">
+              <Share2 className="w-5 h-5 text-[#7C2D36]" />
+              <div>
+                <p className="text-sm font-medium text-[#1A1A1A]">Social Tasting</p>
+                <p className="text-xs text-[#6B7280]">
+                  {tasting.isSocialMode
+                    ? "Guests can join and score"
+                    : "Invite others to score"}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleToggleSocialMode}
+              disabled={socialToggling}
+              className={cn(
+                "relative inline-flex h-7 w-12 items-center rounded-full transition-colors",
+                tasting.isSocialMode ? "bg-[#22C55E]" : "bg-[#E5E1DB]"
+              )}
+            >
+              <span
+                className={cn(
+                  "inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm",
+                  tasting.isSocialMode ? "translate-x-6" : "translate-x-1"
+                )}
+              />
+            </button>
+          </div>
+
+          {tasting.isSocialMode && tasting.sessionCode && (
+            <div className="mt-2 p-4 bg-white rounded-lg border border-[#22C55E]/30 space-y-3">
+              {/* Invite link */}
+              <div>
+                <p className="text-xs font-medium text-[#6B7280] uppercase mb-1">Invite Link</p>
+                <div className="flex gap-2">
+                  <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-[#F5F0EB] rounded-lg text-sm font-mono text-[#1A1A1A] truncate">
+                    <Link className="w-4 h-4 flex-shrink-0 text-[#7C2D36]" />
+                    <span className="truncate">{typeof window !== "undefined" ? `${window.location.origin}/join/${tasting.sessionCode}` : `/join/${tasting.sessionCode}`}</span>
+                  </div>
+                  <button
+                    onClick={handleCopyInviteLink}
+                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                    style={{ backgroundColor: copiedLink ? "#22C55E" : "#7C2D36" }}
+                  >
+                    {copiedLink ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Session code */}
+              <div className="flex items-center gap-3">
+                <p className="text-xs text-[#6B7280]">Code:</p>
+                <span className="font-mono font-bold text-lg text-[#7C2D36] tracking-wider">{tasting.sessionCode}</span>
+              </div>
+
+              {/* View Results button */}
+              <button
+                onClick={() => {
+                  fetchSocialResults();
+                  setActiveTab("social");
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-[#7C2D36] text-[#7C2D36] text-sm font-medium hover:bg-[#7C2D36]/5 transition-colors"
+              >
+                <Eye className="w-4 h-4" />
+                View Social Results
+              </button>
+            </div>
+          )}
+        </div>
+
         <div className="flex gap-2 mb-6 border-b border-[#E5E1DB]">
           <button
             onClick={() => setActiveTab("entries")}
@@ -574,6 +726,25 @@ export default function TastingDetailPage() {
           >
             Compare
           </button>
+          {tasting.isSocialMode && (
+            <button
+              onClick={() => {
+                setActiveTab("social");
+                fetchSocialResults();
+              }}
+              className={cn(
+                "px-4 py-2 font-medium text-sm transition-colors border-b-2",
+                activeTab === "social"
+                  ? "text-[#22C55E] border-b-[#22C55E]"
+                  : "text-[#6B7280] border-b-transparent hover:text-[#1A1A1A]"
+              )}
+            >
+              <span className="flex items-center gap-1">
+                <Users className="w-4 h-4" />
+                Social
+              </span>
+            </button>
+          )}
         </div>
 
         {activeTab === "entries" && (
@@ -1727,6 +1898,126 @@ export default function TastingDetailPage() {
                 PDF
               </Button>
             </div>
+          </div>
+        )}
+
+        {activeTab === "social" && tasting.isSocialMode && (
+          <div className="space-y-6">
+            {loadingSocialResults ? (
+              <div className="flex items-center justify-center py-12">
+                <Loading variant="inline" />
+              </div>
+            ) : (
+              <>
+                {/* Guests */}
+                <div>
+                  <h3 className="text-sm font-semibold text-[#6B7280] uppercase mb-3 flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Guests ({socialGuests.length})
+                  </h3>
+                  {socialGuests.length === 0 ? (
+                    <div className="text-center py-8 bg-white rounded-lg border border-[#E5E1DB]">
+                      <Users className="w-10 h-10 text-[#E5E1DB] mx-auto mb-2" />
+                      <p className="text-sm text-[#6B7280]">No guests have joined yet</p>
+                      <p className="text-xs text-[#6B7280] mt-1">Share the invite link to get started</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {socialGuests.map((guest) => (
+                        <div key={guest.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-[#E5E1DB]">
+                          <div className="w-8 h-8 rounded-full bg-[#7C2D36]/10 flex items-center justify-center text-sm font-bold text-[#7C2D36]">
+                            {guest.guestName.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-[#1A1A1A]">{guest.guestName}</p>
+                            <p className="text-xs text-[#6B7280]">
+                              Joined {new Date(guest.joinedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Social Comparison Table */}
+                {socialComparison.length > 0 && socialGuests.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-[#6B7280] uppercase mb-3">
+                      Score Comparison
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm bg-white rounded-lg border border-[#E5E1DB] overflow-hidden">
+                        <thead>
+                          <tr className="border-b border-[#E5E1DB] bg-[#F5F0EB]">
+                            <th className="text-left p-3 font-semibold text-[#1A1A1A]">
+                              {isBeer ? "Beer" : "Wine"}
+                            </th>
+                            <th className="text-center p-3 font-semibold text-[#7C2D36]">
+                              You
+                            </th>
+                            {socialGuests.map((guest) => (
+                              <th key={guest.id} className="text-center p-3 font-semibold text-[#1A1A1A]">
+                                {guest.guestName}
+                              </th>
+                            ))}
+                            <th className="text-center p-3 font-semibold text-[#D4A847]">
+                              Avg
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {socialComparison.map((wine) => {
+                            const allScores = [
+                              wine.hostScore,
+                              ...wine.guestScores.map((g) => g.totalScore),
+                            ].filter((s): s is number => s !== null && s !== undefined);
+                            const avg = allScores.length > 0
+                              ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length)
+                              : null;
+
+                            return (
+                              <tr key={wine.entryId} className="border-b border-[#E5E1DB] hover:bg-[#F5F1EB]">
+                                <td className="p-3">
+                                  <p className="font-medium text-[#1A1A1A]">{wine.wineName}</p>
+                                  {wine.producer && (
+                                    <p className="text-xs text-[#6B7280]">{wine.producer}</p>
+                                  )}
+                                </td>
+                                <td className="p-3 text-center font-bold text-[#7C2D36]">
+                                  {wine.hostScore ?? "-"}
+                                </td>
+                                {socialGuests.map((guest) => {
+                                  const gs = wine.guestScores.find((g) => g.guestId === guest.id);
+                                  return (
+                                    <td key={guest.id} className="p-3 text-center font-medium text-[#1A1A1A]">
+                                      {gs?.totalScore ?? "-"}
+                                    </td>
+                                  );
+                                })}
+                                <td className="p-3 text-center font-bold text-[#D4A847]">
+                                  {avg ?? "-"}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Refresh button */}
+                <Button
+                  variant="outline"
+                  onClick={fetchSocialResults}
+                  disabled={loadingSocialResults}
+                  className="w-full"
+                >
+                  Refresh Results
+                </Button>
+              </>
+            )}
           </div>
         )}
       </div>
