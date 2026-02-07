@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   Wine,
@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
+import { PhotoCapture } from "@/components/ui/photo-capture";
 import { ChipSelect } from "@/components/ui/chip-select";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api-client";
@@ -99,6 +100,11 @@ export default function BottleDetailPage() {
   const [editLocationId, setEditLocationId] = useState("");
   const [editSubLocation, setEditSubLocation] = useState("");
   const [editQuantity, setEditQuantity] = useState(1);
+  const [editPhoto, setEditPhoto] = useState<File | null>(null);
+
+  // Consume quantity form
+  const [showConsumeForm, setShowConsumeForm] = useState(false);
+  const [consumeCount, setConsumeCount] = useState(1);
 
   // Drink log form
   const [drinkVenue, setDrinkVenue] = useState("");
@@ -156,6 +162,7 @@ export default function BottleDetailPage() {
     setEditLocationId(bottle.locationId || "");
     setEditSubLocation(bottle.subLocationText || "");
     setEditQuantity(bottle.quantity);
+    setEditPhoto(null);
     setIsEditMode(true);
   };
 
@@ -163,6 +170,18 @@ export default function BottleDetailPage() {
     if (!editName.trim()) return;
     try {
       setIsSaving(true);
+
+      // Upload new photo if selected
+      let newPhotoUrl: string | undefined;
+      if (editPhoto) {
+        try {
+          const uploadResult = await api.uploadFile("/uploads", editPhoto);
+          newPhotoUrl = uploadResult.photoUrl;
+        } catch (uploadErr) {
+          console.error("Photo upload failed:", uploadErr);
+        }
+      }
+
       const updateData: Record<string, unknown> = {
         name: editName.trim(),
         producer: editProducer.trim() || undefined,
@@ -173,6 +192,7 @@ export default function BottleDetailPage() {
         subLocationText: editSubLocation.trim() || undefined,
         quantity: editQuantity,
       };
+      if (newPhotoUrl) updateData.photoUrl = newPhotoUrl;
 
       const updated = await api.patch(`/bottles/${bottleId}`, updateData);
       setBottle(updated);
@@ -193,6 +213,29 @@ export default function BottleDetailPage() {
     } catch (err) {
       console.error("Failed to update status:", err);
       setError("Failed to update status.");
+    }
+  };
+
+  const handleConsume = async () => {
+    if (!bottle) return;
+    try {
+      const newQuantity = Math.max(0, bottle.quantity - consumeCount);
+      const updateData: Record<string, unknown> = { quantity: newQuantity };
+
+      // Update quantity
+      const updated = await api.patch(`/bottles/${bottleId}`, updateData);
+      setBottle(updated);
+
+      // If no bottles left, mark as consumed
+      if (newQuantity === 0) {
+        await handleStatusChange("consumed");
+      }
+
+      setShowConsumeForm(false);
+      setConsumeCount(1);
+    } catch (err) {
+      console.error("Failed to consume:", err);
+      setError("Failed to update quantity.");
     }
   };
 
@@ -295,13 +338,13 @@ export default function BottleDetailPage() {
           </div>
 
           <div className="flex gap-2">
-            {bottle.status !== "consumed" && (
+            {bottle.status !== "consumed" && bottle.quantity > 0 && (
               <button
-                onClick={() => handleStatusChange("consumed")}
+                onClick={() => { setConsumeCount(1); setShowConsumeForm(!showConsumeForm); }}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-amber-50 text-amber-800 text-xs font-semibold border border-amber-200 hover:bg-amber-100 transition-colors"
               >
                 <GlassWater className="w-3.5 h-3.5" />
-                Mark Consumed
+                Drink
               </button>
             )}
             {bottle.status !== "in_cellar" && (
@@ -323,13 +366,64 @@ export default function BottleDetailPage() {
               </button>
             )}
           </div>
+
+          {/* Consume quantity picker */}
+          {showConsumeForm && bottle.quantity > 0 && (
+            <div className="mt-3 p-3 rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/50 space-y-3">
+              <p className="text-sm font-semibold text-amber-900">How many?</p>
+              <div className="flex items-center justify-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => setConsumeCount(Math.max(1, consumeCount - 1))}
+                  className="w-10 h-10 rounded-full border-2 border-amber-300 bg-white flex items-center justify-center text-amber-800 font-bold hover:bg-amber-100 transition-colors"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="text-2xl font-bold text-amber-900 min-w-[3rem] text-center">{consumeCount}</span>
+                <button
+                  type="button"
+                  onClick={() => setConsumeCount(Math.min(bottle.quantity, consumeCount + 1))}
+                  className="w-10 h-10 rounded-full border-2 border-amber-300 bg-white flex items-center justify-center text-amber-800 font-bold hover:bg-amber-100 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-xs text-amber-700 text-center">{bottle.quantity} remaining — drinking {consumeCount}</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowConsumeForm(false)}
+                  className="flex-1 py-2 rounded-xl border border-amber-200 text-amber-800 text-xs font-semibold hover:bg-amber-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConsume}
+                  className="flex-1 py-2 rounded-xl bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors"
+                >
+                  Drink {consumeCount} {isBeer ? (consumeCount === 1 ? "beer" : "beers") : (consumeCount === 1 ? "bottle" : "bottles")}
+                </button>
+              </div>
+            </div>
+          )}
         </Card>
 
         {/* ─── Edit Mode ─── */}
         {isEditMode ? (
           <Card variant="elevated" className="p-5 rounded-2xl space-y-4">
-            <Input label="Wine Name" value={editName} onChange={(e) => setEditName(e.target.value)} required />
-            <Input label="Wine Maker" value={editProducer} onChange={(e) => setEditProducer(e.target.value)} placeholder="e.g., Château Margaux" />
+            {/* Photo in edit mode */}
+            <div>
+              <label className="text-sm font-semibold text-[#1A1A1A] block mb-2">Photo</label>
+              {bottle.photoUrl && !editPhoto && (
+                <img src={bottle.photoUrl} alt={bottle.name} className="w-full rounded-xl border border-[#E5E1DB] object-cover max-h-48 mb-2" />
+              )}
+              <PhotoCapture onPhotoSelected={setEditPhoto} className="" />
+              {editPhoto && (
+                <p className="text-xs text-emerald-600 mt-1">New photo selected — will upload on save</p>
+              )}
+            </div>
+
+            <Input label={isBeer ? "Beer Name" : "Wine Name"} value={editName} onChange={(e) => setEditName(e.target.value)} required />
+            <Input label={isBeer ? "Brewery" : "Wine Maker"} value={editProducer} onChange={(e) => setEditProducer(e.target.value)} placeholder={isBeer ? "e.g., BrewDog" : "e.g., Château Margaux"} />
             <Input label="Vintage" type="number" value={editVintage} onChange={(e) => setEditVintage(e.target.value)} />
             <div className="flex gap-3">
               <div className="flex-1">
