@@ -408,7 +408,13 @@ export default function BottlesPage() {
                     />
                   </div>
                 ) : (
-                  <div className="h-2 w-full bg-gradient-to-r from-[#7C2D36] via-[#A31D3D] to-[#D4A847]" />
+                  <div className="aspect-[3/2] w-full bg-gradient-to-br from-[#F5F1EB] to-[#E5E1DB] flex items-center justify-center">
+                    {isBeer ? (
+                      <Beer className="w-12 h-12 text-[#B45309]/25" />
+                    ) : (
+                      <Wine className="w-12 h-12 text-[#7C2D36]/25" />
+                    )}
+                  </div>
                 )}
 
                 {/* Content */}
