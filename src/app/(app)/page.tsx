@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Loading } from "@/components/ui/loading";
 import { Plus, Wine, Beer, ClipboardList, ChevronRight, Users, ArrowRight } from "lucide-react";
+import { WinelogLogo } from "@/components/ui/winelog-logo";
 
 interface Bottle {
   id: string;
@@ -98,13 +99,17 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#FDFBF7]">
       {/* Hero */}
-      <div className="bg-gradient-to-br from-[#7C2D36] via-[#5C1F28] to-[#3A0F18] text-white px-4 pt-8 pb-12">
+      <div className="bg-gradient-to-br from-[#7C2D36] via-[#5C1F28] to-[#3A0F18] text-white px-4 pt-6 pb-12">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold tracking-tight">
-              Welcome back, {user?.name?.split(" ")[0]}
-            </h1>
-            <p className="text-white/60 text-sm mt-1">{isBeer ? "Your beer collection at a glance" : "Your wine collection at a glance"}</p>
+          {/* Logo + Greeting */}
+          <div className="flex items-center gap-3 mb-6">
+            <WinelogLogo size="sm" variant="icon" color="cream" />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">
+                Hey, {user?.name?.split(" ")[0]}
+              </h1>
+              <p className="text-white/50 text-xs mt-0.5">{isBeer ? "Your beer collection at a glance" : "Your wine collection at a glance"}</p>
+            </div>
           </div>
 
           {/* Stats */}
