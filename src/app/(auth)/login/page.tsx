@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Users, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
@@ -16,6 +17,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showJoinInput, setShowJoinInput] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,6 +124,60 @@ export default function LoginPage() {
           Create an account
         </Link>
       </p>
+
+      {/* Join Tasting Divider */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-[#E5E1DB]" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-2 bg-white/90 text-[#8B7355] font-light">
+            Got a tasting code?
+          </span>
+        </div>
+      </div>
+
+      {/* Join Tasting Session */}
+      {!showJoinInput ? (
+        <button
+          onClick={() => setShowJoinInput(true)}
+          className="w-full h-11 rounded-xl border-2 border-[#22C55E]/40 bg-[#22C55E]/5 text-[#22C55E] text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#22C55E]/10 transition-colors"
+        >
+          <Users className="w-4 h-4" />
+          Join a Tasting Session
+        </button>
+      ) : (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, "").slice(0, 6))}
+            placeholder="Enter code"
+            maxLength={6}
+            autoFocus
+            className="flex-1 h-11 rounded-xl border-2 border-[#22C55E]/40 bg-[#22C55E]/5 px-4 text-center font-mono text-lg tracking-[0.3em] text-[#1A1A1A] placeholder:text-[#8B7355]/40 focus:outline-none focus:ring-2 focus:ring-[#22C55E]/30 focus:border-[#22C55E]"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && joinCode.length >= 4) {
+                router.push(`/join/${joinCode}`);
+              }
+              if (e.key === "Escape") {
+                setShowJoinInput(false);
+                setJoinCode("");
+              }
+            }}
+          />
+          <button
+            onClick={() => {
+              if (joinCode.length >= 4) router.push(`/join/${joinCode}`);
+            }}
+            disabled={joinCode.length < 4}
+            className="h-11 px-5 rounded-xl bg-[#22C55E] text-white font-medium text-sm flex items-center gap-1.5 disabled:opacity-40 transition-opacity"
+          >
+            <ArrowRight className="w-4 h-4" />
+            Join
+          </button>
+        </div>
+      )}
     </div>
   );
 }
