@@ -193,6 +193,7 @@
   "scan.drag_drop": "ou glissez-déposez",
   "scan.scanning_form": "Lecture de l'étiquette — les champs se rempliront automatiquement...",
   "scan.wait_scanning": "Scan en cours...",
+  "scan.offline": "Scan indisponible — remplissez manuellement",
 
   "guest.join_title": "Rejoindre la Dégustation",
   "guest.enter_name": "Entrez votre nom",

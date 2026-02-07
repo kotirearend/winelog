@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Camera, X, Loader2, Check, AlertTriangle } from "lucide-react";
+import { Camera, X, Loader2, Check, AlertTriangle, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n-context";
 
@@ -30,7 +30,7 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [preview, setPreview] = React.useState<string | undefined>(photoUrl);
     const [isMobile, setIsMobile] = React.useState<boolean>(false);
-    const [scanState, setScanState] = React.useState<"idle" | "scanning" | "success" | "low-confidence" | "error">("idle");
+    const [scanState, setScanState] = React.useState<"idle" | "scanning" | "success" | "low-confidence" | "error" | "offline">("idle");
 
     React.useEffect(() => {
       setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
@@ -50,7 +50,7 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
         // Get auth token from localStorage
         const token = localStorage.getItem("token");
         if (!token) {
-          setScanState("error");
+          setScanState("offline");
           return;
         }
 
@@ -64,7 +64,7 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
         });
 
         if (!response.ok) {
-          setScanState("error");
+          setScanState("offline");
           return;
         }
 
@@ -86,8 +86,7 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
         }, 4000);
       } catch (err) {
         console.error("Scan failed:", err);
-        setScanState("error");
-        setTimeout(() => setScanState("idle"), 3000);
+        setScanState("offline");
       } finally {
         onScanStateChange?.(false);
       }
@@ -182,6 +181,13 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
               <div className="absolute bottom-0 left-0 right-0 bg-amber-600/90 backdrop-blur-sm rounded-b-lg px-3 py-2 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-white" />
                 <span className="text-white text-xs font-medium">{t("scan.low_confidence")}</span>
+              </div>
+            )}
+
+            {scanState === "offline" && (
+              <div className="absolute bottom-0 left-0 right-0 bg-gray-700/90 backdrop-blur-sm rounded-b-lg px-3 py-2 flex items-center gap-2">
+                <WifiOff className="w-4 h-4 text-white" />
+                <span className="text-white text-xs font-medium">{t("scan.offline")}</span>
               </div>
             )}
           </div>

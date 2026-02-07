@@ -193,6 +193,7 @@
   "scan.drag_drop": "o arrastra y suelta",
   "scan.scanning_form": "Leyendo la etiqueta — los campos se llenarán automáticamente...",
   "scan.wait_scanning": "Escaneando etiqueta...",
+  "scan.offline": "Escaneo no disponible — rellene manualmente",
 
   "guest.join_title": "Unirse a Degustación",
   "guest.enter_name": "Ingresa tu nombre",

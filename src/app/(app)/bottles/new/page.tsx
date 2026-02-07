@@ -216,12 +216,15 @@ export default function AddBottlePage() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const [photoUploadFailed, setPhotoUploadFailed] = useState(false);
+
   const uploadPhoto = async (file: File): Promise<string | null> => {
     try {
       const result = await api.uploadFile("/uploads", file);
       return result.photoUrl;
     } catch (err) {
       console.error("Photo upload failed:", err);
+      setPhotoUploadFailed(true);
       return null;
     }
   };
@@ -275,7 +278,12 @@ export default function AddBottlePage() {
       const response = await api.post("/bottles", bottleData);
 
       if (response && response.id) {
-        router.push("/bottles");
+        // If photo upload failed, pass a query param so the list can show a note
+        if (photoUploadFailed) {
+          router.push("/bottles?photoSkipped=1");
+        } else {
+          router.push("/bottles");
+        }
       }
     } catch (err) {
       console.error("Failed to save bottle:", err);

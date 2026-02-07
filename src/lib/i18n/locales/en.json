@@ -193,6 +193,7 @@
   "scan.drag_drop": "or drag and drop",
   "scan.scanning_form": "Reading your label — fields will fill in automatically...",
   "scan.wait_scanning": "Scanning label...",
+  "scan.offline": "Scan unavailable — fill in details manually",
 
   "guest.join_title": "Join Tasting",
   "guest.enter_name": "Enter your name",
