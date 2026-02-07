@@ -761,7 +761,7 @@ export default function TastingDetailPage() {
                   const score = entry.totalScore || 0;
                   const qualityLevel = entry.tastingNotes?.qualityLevel;
                   const isExpanded = expandedEntry?.entryId === entry.id;
-                  const name = entry.bottleName || entry.adHocName || "Unknown";
+                  const name = entry.bottleName || entry.adHocName || "Untitled Wine";
 
                   return (
                     <div key={entry.id}>
@@ -1835,7 +1835,7 @@ export default function TastingDetailPage() {
                       {sortedEntries.map((entry, index) => {
                         const score = entry.totalScore || 0;
                         const qualityLevel = entry.tastingNotes?.qualityLevel;
-                        const name = entry.bottleName || entry.adHocName || "Unknown";
+                        const name = entry.bottleName || entry.adHocName || "Untitled Wine";
                         return (
                           <tr
                             key={entry.id}

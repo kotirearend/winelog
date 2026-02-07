@@ -148,7 +148,19 @@ export default function GuestTastingPage() {
     setError("");
 
     try {
-      for (const entry of hostEntries) {
+      // Only submit entries that have at least one category scored
+      const entriesToSubmit = hostEntries.filter((entry) => {
+        const entryScores = scores[entry.id] || {};
+        return Object.keys(entryScores).length > 0;
+      });
+
+      if (entriesToSubmit.length === 0) {
+        setError("Score at least one wine before submitting!");
+        setSubmitting(false);
+        return;
+      }
+
+      for (const entry of entriesToSubmit) {
         const entryScores = scores[entry.id] || {};
         const totalScore = calculateTotalScore(entryScores);
 
@@ -156,7 +168,7 @@ export default function GuestTastingPage() {
           `/guest-sessions/${sessionCode}/entries/${entry.id}/score`,
           {
             totalScore,
-            tastingNotes: entryScores,
+            tastingNotes: Object.keys(entryScores).length > 0 ? entryScores : null,
             notesShort: notes[entry.id] || null,
           }
         );

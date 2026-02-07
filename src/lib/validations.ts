@@ -94,7 +94,7 @@ export const tastingEntryCreateSchema = z
 
 export const tastingEntryScoreSchema = z.object({
   // Overall quality score (0-100)
-  totalScore: z.number().int().min(0).max(100).optional(),
+  totalScore: z.number().int().min(0).max(100).nullable().optional(),
   // Structured tasting notes stored as JSON (wine WSET + beer BJCP fields)
   tastingNotes: z.object({
     // === WINE (WSET SAT) ===
@@ -153,11 +153,11 @@ export const tastingEntryScoreSchema = z.object({
     casualValue: z.string().optional(),
     casualBuyAgain: z.string().optional(),
     casualVibes: z.string().optional(),
-  }).optional(),
+  }).nullable().optional(),
   // Free text notes
-  notesShort: z.string().max(500, 'Short notes must be 500 characters or less').optional(),
-  notesLong: z.string().optional(),
-  tags: z.array(z.string()).optional(),
+  notesShort: z.string().max(500, 'Short notes must be 500 characters or less').nullable().optional(),
+  notesLong: z.string().nullable().optional(),
+  tags: z.array(z.string()).nullable().optional(),
   // Legacy fields (kept for backward compat)
   appearanceScore: z.number().int().min(0).max(20).optional(),
   noseScore: z.number().int().min(0).max(20).optional(),
