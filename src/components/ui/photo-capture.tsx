@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Camera, X, Loader2, Check, AlertTriangle, WifiOff } from "lucide-react";
+import { Camera, X, Loader2, Check, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n-context";
 
@@ -48,7 +48,7 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
         const base64 = await resizeImageToBase64(file, 800);
 
         // Get auth token from localStorage
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("winelog_token");
         if (!token) {
           setScanState("offline");
           return;
@@ -164,30 +164,38 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
 
             {/* Scan status overlay at bottom of preview */}
             {scanState === "scanning" && (
-              <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm rounded-b-lg px-3 py-2 flex items-center gap-2">
-                <Loader2 className="w-4 h-4 text-white animate-spin" />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#7C2D36]/90 via-[#7C2D36]/60 to-transparent rounded-b-lg px-4 py-3 flex items-center gap-3">
+                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                  <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                </div>
                 <span className="text-white text-xs font-medium">{t("scan.scanning")}</span>
               </div>
             )}
 
             {scanState === "success" && (
-              <div className="absolute bottom-0 left-0 right-0 bg-green-600/90 backdrop-blur-sm rounded-b-lg px-3 py-2 flex items-center gap-2">
-                <Check className="w-4 h-4 text-white" />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-green-700/90 via-green-600/60 to-transparent rounded-b-lg px-4 py-3 flex items-center gap-3">
+                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                  <Check className="w-3.5 h-3.5 text-white" />
+                </div>
                 <span className="text-white text-xs font-medium">{t("scan.success")}</span>
               </div>
             )}
 
             {scanState === "low-confidence" && (
-              <div className="absolute bottom-0 left-0 right-0 bg-amber-600/90 backdrop-blur-sm rounded-b-lg px-3 py-2 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-white" />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-amber-700/90 via-amber-600/60 to-transparent rounded-b-lg px-4 py-3 flex items-center gap-3">
+                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-200" />
+                </div>
                 <span className="text-white text-xs font-medium">{t("scan.low_confidence")}</span>
               </div>
             )}
 
             {scanState === "offline" && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gray-700/90 backdrop-blur-sm rounded-b-lg px-3 py-2 flex items-center gap-2">
-                <WifiOff className="w-4 h-4 text-white" />
-                <span className="text-white text-xs font-medium">{t("scan.offline")}</span>
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/50 to-transparent rounded-b-lg px-4 py-3 flex items-center gap-3">
+                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-300" />
+                </div>
+                <span className="text-white/90 text-xs font-medium leading-tight">{t("scan.offline")}</span>
               </div>
             )}
           </div>
