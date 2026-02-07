@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { PhotoCapture } from "@/components/ui/photo-capture";
+import { PhotoCapture, ScanResult } from "@/components/ui/photo-capture";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
@@ -74,6 +74,7 @@ export default function AddBottlePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
   const [defaultCurrency, setDefaultCurrency] = useState("GBP");
+  const [isScanning, setIsScanning] = useState(false);
 
   // Form state — core fields
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -108,6 +109,18 @@ export default function AddBottlePage() {
   const producerInputRef = useRef<HTMLInputElement>(null);
   const grapeInputRef = useRef<HTMLInputElement>(null);
   const regionInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-fill from scan results — only fills empty fields
+  const handleScanResult = useCallback((data: ScanResult) => {
+    if (data.name && !name.trim()) setName(data.name);
+    if (data.producer && !producer.trim()) setProducer(data.producer);
+    if (data.vintage && !vintage) setVintage(String(data.vintage));
+    if (data.country && !country.trim()) setCountry(data.country);
+    if (data.region && !region.trim()) setRegion(data.region);
+    if (data.grapes && data.grapes.length > 0 && grapes.length === 0) {
+      setGrapes(data.grapes);
+    }
+  }, [name, producer, vintage, country, region, grapes]);
 
   const fetchLocations = useCallback(async () => {
     try {
@@ -279,6 +292,9 @@ export default function AddBottlePage() {
         <Card variant="elevated" className="p-6 rounded-2xl">
           <PhotoCapture
             onPhotoSelected={setSelectedFile}
+            enableScan={true}
+            onScanResult={handleScanResult}
+            onScanStateChange={setIsScanning}
             className=""
           />
         </Card>

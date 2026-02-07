@@ -1,24 +1,95 @@
 "use client";
 
 import * as React from "react";
-import { Camera, X } from "lucide-react";
+import { Camera, X, Loader2, Check, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+export interface ScanResult {
+  name: string | null;
+  producer: string | null;
+  vintage: number | null;
+  country: string | null;
+  region: string | null;
+  grapes: string[];
+  confidence: "high" | "medium" | "low";
+}
 
 export interface PhotoCaptureProps {
   onPhotoSelected?: (file: File) => void;
   photoUrl?: string;
   className?: string;
+  enableScan?: boolean;
+  onScanResult?: (data: ScanResult) => void;
+  onScanStateChange?: (scanning: boolean) => void;
 }
 
 const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
-  ({ onPhotoSelected, photoUrl, className }, ref) => {
+  ({ onPhotoSelected, photoUrl, className, enableScan = false, onScanResult, onScanStateChange }, ref) => {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [preview, setPreview] = React.useState<string | undefined>(photoUrl);
     const [isMobile, setIsMobile] = React.useState<boolean>(false);
+    const [scanState, setScanState] = React.useState<"idle" | "scanning" | "success" | "low-confidence" | "error">("idle");
 
     React.useEffect(() => {
       setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
     }, []);
+
+    const runScan = React.useCallback(async (file: File) => {
+      if (!enableScan) return;
+
+      try {
+        setScanState("scanning");
+        onScanStateChange?.(true);
+
+        // Dynamic import to avoid loading resize-image on pages that don't need it
+        const { resizeImageToBase64 } = await import("@/lib/resize-image");
+        const base64 = await resizeImageToBase64(file, 800);
+
+        // Get auth token from localStorage
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setScanState("error");
+          return;
+        }
+
+        const response = await fetch("/api/scan-label", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ imageBase64: base64 }),
+        });
+
+        if (!response.ok) {
+          setScanState("error");
+          return;
+        }
+
+        const data: ScanResult = await response.json();
+
+        if (data.confidence === "low") {
+          setScanState("low-confidence");
+        } else {
+          setScanState("success");
+        }
+
+        onScanResult?.(data);
+
+        // Auto-clear success state after 3 seconds
+        setTimeout(() => {
+          setScanState((current) =>
+            current === "success" || current === "low-confidence" ? "idle" : current
+          );
+        }, 4000);
+      } catch (err) {
+        console.error("Scan failed:", err);
+        setScanState("error");
+        setTimeout(() => setScanState("idle"), 3000);
+      } finally {
+        onScanStateChange?.(false);
+      }
+    }, [enableScan, onScanResult, onScanStateChange]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -29,6 +100,11 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
         };
         reader.readAsDataURL(file);
         onPhotoSelected?.(file);
+
+        // Trigger scan in parallel
+        if (enableScan) {
+          runScan(file);
+        }
       }
     };
 
@@ -41,6 +117,7 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
     const handleRemove = (e: React.MouseEvent) => {
       e.stopPropagation();
       setPreview(undefined);
+      setScanState("idle");
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -63,8 +140,19 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
             <img
               src={preview}
               alt="Photo preview"
-              className="w-full rounded-lg border border-[#E5E1DB] object-cover"
+              className={cn(
+                "w-full rounded-lg border-2 object-cover transition-all duration-300",
+                scanState === "scanning"
+                  ? "border-[#7C2D36] animate-pulse"
+                  : scanState === "success"
+                  ? "border-green-500"
+                  : scanState === "low-confidence"
+                  ? "border-amber-500"
+                  : "border-[#E5E1DB]"
+              )}
             />
+
+            {/* Remove button */}
             <button
               onClick={handleRemove}
               className="absolute top-2 right-2 p-1 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors"
@@ -72,6 +160,28 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
             >
               <X className="w-4 h-4" />
             </button>
+
+            {/* Scan status overlay at bottom of preview */}
+            {scanState === "scanning" && (
+              <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm rounded-b-lg px-3 py-2 flex items-center gap-2">
+                <Loader2 className="w-4 h-4 text-white animate-spin" />
+                <span className="text-white text-xs font-medium">Scanning label...</span>
+              </div>
+            )}
+
+            {scanState === "success" && (
+              <div className="absolute bottom-0 left-0 right-0 bg-green-600/90 backdrop-blur-sm rounded-b-lg px-3 py-2 flex items-center gap-2">
+                <Check className="w-4 h-4 text-white" />
+                <span className="text-white text-xs font-medium">Label scanned!</span>
+              </div>
+            )}
+
+            {scanState === "low-confidence" && (
+              <div className="absolute bottom-0 left-0 right-0 bg-amber-600/90 backdrop-blur-sm rounded-b-lg px-3 py-2 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-white" />
+                <span className="text-white text-xs font-medium">Check details — scan wasn&apos;t confident</span>
+              </div>
+            )}
           </div>
         ) : (
           <div
@@ -86,7 +196,11 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
               <p className="text-sm font-medium text-[#1A1A1A]">
                 {isMobile ? "Tap to take a photo" : "Click to upload a photo"}
               </p>
-              <p className="text-xs text-[#6B7280]">or drag and drop</p>
+              <p className="text-xs text-[#6B7280]">
+                {enableScan
+                  ? "We'll auto-fill details from the label"
+                  : "or drag and drop"}
+              </p>
             </div>
           </div>
         )}
