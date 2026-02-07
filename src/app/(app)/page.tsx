@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Loading } from "@/components/ui/loading";
-import { Plus, Wine, Beer, ClipboardList, ChevronRight } from "lucide-react";
+import { Plus, Wine, Beer, ClipboardList, ChevronRight, Users, ArrowRight } from "lucide-react";
 
 interface Bottle {
   id: string;
@@ -34,12 +35,15 @@ interface Tasting {
 }
 
 export default function HomePage() {
+  const router = useRouter();
   const { user, beverageType } = useAuth();
   const isBeer = beverageType === "beer";
   const [allBottles, setAllBottles] = useState<Bottle[]>([]);
   const [tastings, setTastings] = useState<Tasting[]>([]);
   const [bottlesLoading, setBottlesLoading] = useState(true);
   const [tastingsLoading, setTastingsLoading] = useState(true);
+  const [showJoinInput, setShowJoinInput] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
 
   useEffect(() => {
     const fetchBottles = async () => {
@@ -126,6 +130,48 @@ export default function HomePage() {
               {isBeer ? "Quick Add Beer" : "Quick Add Bottle"}
             </Button>
           </Link>
+
+          {/* Join Tasting */}
+          {!showJoinInput ? (
+            <button
+              onClick={() => setShowJoinInput(true)}
+              className="w-full mt-3 h-10 rounded-xl border border-white/30 bg-white/10 backdrop-blur-sm text-white/90 text-sm font-medium flex items-center justify-center gap-2 hover:bg-white/20 transition-colors"
+            >
+              <Users className="w-4 h-4" />
+              Join a Tasting Session
+            </button>
+          ) : (
+            <div className="mt-3 flex gap-2">
+              <input
+                type="text"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, "").slice(0, 6))}
+                placeholder="Enter code"
+                maxLength={6}
+                autoFocus
+                className="flex-1 h-10 rounded-xl bg-white/15 border border-white/30 text-white placeholder:text-white/40 px-4 text-center font-mono text-lg tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-[#D4A847]/50"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && joinCode.length >= 4) {
+                    router.push(`/join/${joinCode}`);
+                  }
+                  if (e.key === "Escape") {
+                    setShowJoinInput(false);
+                    setJoinCode("");
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  if (joinCode.length >= 4) router.push(`/join/${joinCode}`);
+                }}
+                disabled={joinCode.length < 4}
+                className="h-10 px-4 rounded-xl bg-[#22C55E] text-white font-medium text-sm flex items-center gap-1 disabled:opacity-40 transition-opacity"
+              >
+                <ArrowRight className="w-4 h-4" />
+                Join
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
