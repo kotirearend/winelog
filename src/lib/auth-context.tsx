@@ -13,6 +13,7 @@ export interface User {
   defaultCurrency: string;
   beverageType?: BeverageType;
   scoringMode?: ScoringMode;
+  preferredLanguage?: string;
 }
 
 interface AuthContextType {

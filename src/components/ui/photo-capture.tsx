@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Camera, X, Loader2, Check, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n-context";
 
 export interface ScanResult {
   name: string | null;
@@ -25,6 +26,7 @@ export interface PhotoCaptureProps {
 
 const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
   ({ onPhotoSelected, photoUrl, className, enableScan = false, onScanResult, onScanStateChange }, ref) => {
+    const { t } = useTranslation();
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [preview, setPreview] = React.useState<string | undefined>(photoUrl);
     const [isMobile, setIsMobile] = React.useState<boolean>(false);
@@ -165,21 +167,21 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
             {scanState === "scanning" && (
               <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm rounded-b-lg px-3 py-2 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 text-white animate-spin" />
-                <span className="text-white text-xs font-medium">Scanning label...</span>
+                <span className="text-white text-xs font-medium">{t("scan.scanning")}</span>
               </div>
             )}
 
             {scanState === "success" && (
               <div className="absolute bottom-0 left-0 right-0 bg-green-600/90 backdrop-blur-sm rounded-b-lg px-3 py-2 flex items-center gap-2">
                 <Check className="w-4 h-4 text-white" />
-                <span className="text-white text-xs font-medium">Label scanned!</span>
+                <span className="text-white text-xs font-medium">{t("scan.success")}</span>
               </div>
             )}
 
             {scanState === "low-confidence" && (
               <div className="absolute bottom-0 left-0 right-0 bg-amber-600/90 backdrop-blur-sm rounded-b-lg px-3 py-2 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-white" />
-                <span className="text-white text-xs font-medium">Check details — scan wasn&apos;t confident</span>
+                <span className="text-white text-xs font-medium">{t("scan.low_confidence")}</span>
               </div>
             )}
           </div>
@@ -194,12 +196,12 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
             <Camera className="w-8 h-8 text-[#7C2D36]" />
             <div className="text-center">
               <p className="text-sm font-medium text-[#1A1A1A]">
-                {isMobile ? "Tap to take a photo" : "Click to upload a photo"}
+                {isMobile ? t("scan.photo_prompt_mobile") : t("scan.photo_prompt_desktop")}
               </p>
               <p className="text-xs text-[#6B7280]">
                 {enableScan
-                  ? "We'll auto-fill details from the label"
-                  : "or drag and drop"}
+                  ? t("scan.auto_fill_hint")
+                  : t("scan.drag_drop")}
               </p>
             </div>
           </div>

@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Loading } from "@/components/ui/loading";
 import { useAuth } from "@/lib/auth-context";
+import { useTranslation } from "@/lib/i18n-context";
 import { api } from "@/lib/api-client";
 
 interface TastingEntry {
@@ -27,9 +28,17 @@ interface TastingSession {
   entries?: TastingEntry[];
 }
 
-function formatDate(dateString: string): string {
+function formatDate(dateString: string, language: string): string {
   const date = new Date(dateString);
-  const month = date.toLocaleString("en-US", { month: "short" });
+  const localeMap: Record<string, string> = {
+    en: "en-US",
+    fr: "fr-FR",
+    es: "es-ES",
+    de: "de-DE",
+    it: "it-IT",
+  };
+  const locale = localeMap[language] || "en-US";
+  const month = date.toLocaleString(locale, { month: "short" });
   const day = date.getDate();
   const year = date.getFullYear();
   return `${month} ${day}, ${year}`;
@@ -49,6 +58,7 @@ function getTopScore(entries: TastingEntry[]): number | null {
 export default function TastingsPage() {
   const router = useRouter();
   const { beverageType } = useAuth();
+  const { t, language } = useTranslation();
   const isBeer = beverageType === "beer";
   const [tastings, setTastings] = useState<TastingSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -96,7 +106,7 @@ export default function TastingsPage() {
   return (
     <div className="min-h-screen bg-cream">
       <PageHeader
-        title="Tastings"
+        title={t("tastings.title")}
         variant="wine"
         action={
           <Button
@@ -105,7 +115,7 @@ export default function TastingsPage() {
             className="flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
-            <span className="hidden sm:inline">New Tasting</span>
+            <span className="hidden sm:inline">{t("tastings.new")}</span>
           </Button>
         }
       />
@@ -120,10 +130,10 @@ export default function TastingsPage() {
         {tastings.length === 0 ? (
           <EmptyState
             icon={isBeer ? <Beer className="w-12 h-12 text-amber-700" /> : <Wine className="w-12 h-12 text-wine-800" />}
-            title="No tastings yet"
-            description={isBeer ? "Start your first tasting session to begin comparing beers." : "Start your first tasting session to begin comparing wines."}
+            title={t("tastings.empty")}
+            description={t(`tastings.empty_desc_${beverageType}`)}
             action={{
-              label: "New Tasting",
+              label: t("tastings.start"),
               onClick: handleNewTasting,
             }}
           />
@@ -146,7 +156,7 @@ export default function TastingsPage() {
                       </h3>
 
                       <p className="text-sm text-wine-700 mt-1.5 font-medium">
-                        {formatDate(tasting.tastedAt)}
+                        {formatDate(tasting.tastedAt, language)}
                       </p>
 
                       {tasting.venue && (
@@ -157,7 +167,13 @@ export default function TastingsPage() {
 
                       <div className="mt-4 flex flex-wrap gap-2">
                         <Badge variant="secondary" className="bg-wine-100 text-wine-800 border-0">
-                          {entries.length} {isBeer ? "beer" : "wine"}{entries.length !== 1 ? "s" : ""}
+                          {isBeer
+                            ? entries.length === 1
+                              ? t("tastings.beers", { count: entries.length })
+                              : t("tastings.beers_plural", { count: entries.length })
+                            : entries.length === 1
+                            ? t("tastings.wines", { count: entries.length })
+                            : t("tastings.wines_plural", { count: entries.length })}
                         </Badge>
 
                         {topScore !== null && (

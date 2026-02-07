@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Edit2, Check, X, LogOut, Wine, Beer, GraduationCap, Smile } from "lucide-react";
+import { Plus, Edit2, Check, X, LogOut, Wine, Beer, GraduationCap, Smile, Globe } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
 import { useAuth, BeverageType, ScoringMode } from "@/lib/auth-context";
+import { useTranslation, LOCALE_LABELS, SUPPORTED_LOCALES, Locale } from "@/lib/i18n-context";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -23,11 +24,13 @@ interface UserData {
   email: string;
   defaultCurrency?: string;
   beverageType?: string;
+  preferredLanguage?: string;
 }
 
 export default function SettingsPage() {
   const router = useRouter();
   const { beverageType, scoringMode, setBeverageType, setScoringMode } = useAuth();
+  const { t, language, setLanguage: setI18nLanguage } = useTranslation();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,6 +93,25 @@ export default function SettingsPage() {
 
   const handleBeverageChange = (type: BeverageType) => {
     setBeverageType(type);
+  };
+
+  const handleLanguageChange = async (lang: Locale) => {
+    try {
+      setI18nLanguage(lang);
+      try {
+        await api.patch("/auth/me", { preferredLanguage: lang });
+      } catch (err) {
+        console.error("Failed to persist language to database:", err);
+      }
+      // Update stored user in localStorage
+      if (typeof window !== "undefined" && userData) {
+        const updated = { ...userData, preferredLanguage: lang };
+        localStorage.setItem("winelog_user", JSON.stringify(updated));
+      }
+    } catch (err) {
+      console.error("Failed to update language:", err);
+      setError(t("settings.error_language") || "Failed to update language. Please try again.");
+    }
   };
 
   const handleAddLocation = async () => {
@@ -159,7 +181,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-cream">
-      <PageHeader title="Settings" />
+      <PageHeader title={t("settings.title")} />
 
       <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-8 pb-28">
         {error && (
@@ -172,12 +194,12 @@ export default function SettingsPage() {
         <div>
           <div className="flex items-center gap-3 mb-4">
             <div className="h-1 w-1 rounded-full bg-gold-500"></div>
-            <h2 className="text-lg font-semibold text-wine-950">Beverage Type</h2>
+            <h2 className="text-lg font-semibold text-wine-950">{t("settings.beverage_type")}</h2>
           </div>
 
           <Card variant="elevated" className="p-6 rounded-2xl">
             <p className="text-sm text-wine-700 font-medium mb-4">
-              Choose your beverage — this changes the tasting categories, form labels, and scoring system throughout the app.
+              {t("settings.beverage_desc")}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -190,12 +212,12 @@ export default function SettingsPage() {
                 )}
               >
                 <Wine className="w-8 h-8" />
-                <span className="text-sm font-bold">Wine</span>
+                <span className="text-sm font-bold">{t("settings.wine")}</span>
                 <span className={cn(
                   "text-[10px]",
                   !isBeer ? "text-white/70" : "text-[#6B7280]"
                 )}>
-                  WSET Tasting
+                  {t("settings.wset_tasting")}
                 </span>
               </button>
               <button
@@ -208,14 +230,47 @@ export default function SettingsPage() {
                 )}
               >
                 <Beer className="w-8 h-8" />
-                <span className="text-sm font-bold">Beer</span>
+                <span className="text-sm font-bold">{t("settings.beer")}</span>
                 <span className={cn(
                   "text-[10px]",
                   isBeer ? "text-white/70" : "text-[#6B7280]"
                 )}>
-                  BJCP Scoring
+                  {t("settings.bjcp_scoring")}
                 </span>
               </button>
+            </div>
+          </Card>
+        </div>
+
+        {/* Language Section */}
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-1 w-1 rounded-full bg-gold-500"></div>
+            <h2 className="text-lg font-semibold text-wine-950 flex items-center gap-2">
+              <Globe className="w-5 h-5" />
+              {t("settings.language")}
+            </h2>
+          </div>
+
+          <Card variant="elevated" className="p-6 rounded-2xl">
+            <p className="text-sm text-wine-700 font-medium mb-4">
+              {t("settings.language_desc")}
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {SUPPORTED_LOCALES.map((lang: Locale) => (
+                <button
+                  key={lang}
+                  onClick={() => handleLanguageChange(lang)}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-5 rounded-2xl border-2 transition-all duration-200",
+                    language === lang
+                      ? "border-[#7C2D36] bg-[#7C2D36] text-white shadow-lg shadow-[#7C2D36]/20"
+                      : "border-[#E5E1DB] bg-white text-[#1A1A1A] hover:border-[#7C2D36]/40 hover:bg-[#FDF2F4]"
+                  )}
+                >
+                  <span className="text-sm font-bold">{LOCALE_LABELS[lang]}</span>
+                </button>
+              ))}
             </div>
           </Card>
         </div>
@@ -224,12 +279,12 @@ export default function SettingsPage() {
         <div>
           <div className="flex items-center gap-3 mb-4">
             <div className="h-1 w-1 rounded-full bg-gold-500"></div>
-            <h2 className="text-lg font-semibold text-wine-950">Scoring Mode</h2>
+            <h2 className="text-lg font-semibold text-wine-950">{t("settings.scoring_mode")}</h2>
           </div>
 
           <Card variant="elevated" className="p-6 rounded-2xl">
             <p className="text-sm text-wine-700 font-medium mb-4">
-              How deep do you want to go with your tasting notes?
+              {t("settings.scoring_desc")}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -242,12 +297,12 @@ export default function SettingsPage() {
                 )}
               >
                 <Smile className="w-8 h-8" />
-                <span className="text-sm font-bold">Casual</span>
+                <span className="text-sm font-bold">{t("settings.casual")}</span>
                 <span className={cn(
                   "text-[10px] text-center leading-tight",
                   scoringMode === "casual" ? "text-white/70" : "text-[#6B7280]"
                 )}>
-                  Quick &amp; easy vibes
+                  {t("settings.casual_desc")}
                 </span>
               </button>
               <button
@@ -260,12 +315,12 @@ export default function SettingsPage() {
                 )}
               >
                 <GraduationCap className="w-8 h-8" />
-                <span className="text-sm font-bold">Wanker</span>
+                <span className="text-sm font-bold">{t("settings.wanker")}</span>
                 <span className={cn(
                   "text-[10px] text-center leading-tight",
                   scoringMode === "wanker" ? "text-white/70" : "text-[#6B7280]"
                 )}>
-                  Full WSET / BJCP
+                  {t("settings.wanker_desc")}
                 </span>
               </button>
             </div>
@@ -276,13 +331,13 @@ export default function SettingsPage() {
         <div>
           <div className="flex items-center gap-3 mb-4">
             <div className="h-1 w-1 rounded-full bg-gold-500"></div>
-            <h2 className="text-lg font-semibold text-wine-950">Account</h2>
+            <h2 className="text-lg font-semibold text-wine-950">{t("settings.account")}</h2>
           </div>
 
           <Card variant="elevated" className="p-6 rounded-2xl">
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-wine-700 font-medium">Email Address</p>
+                <p className="text-sm text-wine-700 font-medium">{t("settings.email_address")}</p>
                 <p className="text-base font-semibold text-wine-950 mt-2">
                   {userData?.email || "Loading..."}
                 </p>
@@ -295,13 +350,13 @@ export default function SettingsPage() {
         <div>
           <div className="flex items-center gap-3 mb-4">
             <div className="h-1 w-1 rounded-full bg-gold-500"></div>
-            <h2 className="text-lg font-semibold text-wine-950">Default Currency</h2>
+            <h2 className="text-lg font-semibold text-wine-950">{t("settings.default_currency")}</h2>
           </div>
 
           <Card variant="elevated" className="p-6 rounded-2xl">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm text-wine-700 font-medium">Currency for prices</p>
+                <p className="text-sm text-wine-700 font-medium">{t("settings.currency_desc")}</p>
                 <p className="text-base font-semibold text-wine-950 mt-1">
                   {selectedCurrency}
                 </p>
@@ -327,14 +382,14 @@ export default function SettingsPage() {
           <div className="flex items-center gap-3 mb-4">
             <div className="h-1 w-1 rounded-full bg-gold-500"></div>
             <h2 className="text-lg font-semibold text-wine-950">
-              {isBeer ? "Beer Storage Locations" : "Wine Storage Locations"}
+              {t(`settings.locations_${beverageType}`)}
             </h2>
           </div>
 
           <div className="space-y-3">
             {locations.length === 0 ? (
               <Card variant="outlined" className="p-8 text-center rounded-2xl border-2 border-dashed border-warm-border">
-                <p className="text-sm text-wine-700 font-medium">No storage locations yet</p>
+                <p className="text-sm text-wine-700 font-medium">{t("settings.no_locations")}</p>
               </Card>
             ) : (
               locations.map((location) => (
@@ -346,7 +401,7 @@ export default function SettingsPage() {
                   {editingLocationId === location.id ? (
                     <div className="flex-1 flex gap-2">
                       <Input
-                        placeholder="Location name"
+                        placeholder={t("settings.location_placeholder")}
                         value={editingLocationName}
                         onChange={(e) => setEditingLocationName(e.target.value)}
                         className="flex-1"
@@ -390,7 +445,7 @@ export default function SettingsPage() {
           {isAddingLocation ? (
             <Card variant="outlined" className="p-4 mt-3 flex gap-2 rounded-2xl border-2 border-wine-200 bg-wine-50/50">
               <Input
-                placeholder="New location name"
+                placeholder={t("settings.location_placeholder")}
                 value={newLocationName}
                 onChange={(e) => setNewLocationName(e.target.value)}
                 className="flex-1"
@@ -400,7 +455,7 @@ export default function SettingsPage() {
                 onClick={handleAddLocation}
                 disabled={isSaving || !newLocationName.trim()}
               >
-                Save
+                {t("settings.save")}
               </Button>
               <Button
                 variant="outline"
@@ -410,7 +465,7 @@ export default function SettingsPage() {
                 }}
                 disabled={isSaving}
               >
-                Cancel
+                {t("settings.cancel")}
               </Button>
             </Card>
           ) : (
@@ -421,7 +476,7 @@ export default function SettingsPage() {
               disabled={isSaving}
             >
               <Plus className="w-4 h-4" />
-              Add Location
+              {t("settings.add_location")}
             </Button>
           )}
         </div>
@@ -434,7 +489,7 @@ export default function SettingsPage() {
             className="w-full flex items-center justify-center gap-2 rounded-xl"
           >
             <LogOut className="w-4 h-4" />
-            Sign Out
+            {t("settings.sign_out")}
           </Button>
         </div>
       </div>

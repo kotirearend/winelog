@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/components/ui/toast";
+import { useTranslation } from "@/lib/i18n-context";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, isLoading } = useAuth();
   const { addToast } = useToast();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,10 +28,10 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      addToast("Signed in successfully", "success");
+      addToast(t("auth.signed_in_success"), "success");
       router.push("/");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Login failed";
+      const message = err instanceof Error ? err.message : t("auth.login_failed");
       setError(message);
       addToast(message, "error");
     }
@@ -39,9 +41,9 @@ export default function LoginPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-3">
-        <h2 className="text-3xl font-bold text-[#3A0F18]">Welcome Back</h2>
+        <h2 className="text-3xl font-bold text-[#3A0F18]">{t("auth.login_title")}</h2>
         <p className="text-[#8B7355] font-light">
-          Sign in to your wine collection
+          {t("auth.login_subtitle")}
         </p>
       </div>
 
@@ -71,7 +73,7 @@ export default function LoginPage() {
 
         {/* Email Input */}
         <Input
-          label="Email Address"
+          label={t("auth.email_label")}
           type="email"
           placeholder="you@example.com"
           value={email}
@@ -82,7 +84,7 @@ export default function LoginPage() {
 
         {/* Password Input */}
         <Input
-          label="Password"
+          label={t("auth.password_label")}
           type="password"
           placeholder="••••••••"
           value={password}
@@ -99,7 +101,7 @@ export default function LoginPage() {
           isLoading={isLoading}
           disabled={isLoading}
         >
-          Sign In
+          {t("auth.sign_in")}
         </Button>
       </form>
 
@@ -110,7 +112,7 @@ export default function LoginPage() {
         </div>
         <div className="relative flex justify-center text-sm">
           <span className="px-2 bg-white/90 text-[#8B7355] font-light">
-            New to Winelog?
+            {t("auth.new_to_winelog")}
           </span>
         </div>
       </div>
@@ -121,7 +123,7 @@ export default function LoginPage() {
           href="/signup"
           className="text-[#D4A847] font-medium hover:text-[#FBBF24] transition-colors underline"
         >
-          Create an account
+          {t("auth.create_account")}
         </Link>
       </p>
 
@@ -132,7 +134,7 @@ export default function LoginPage() {
         </div>
         <div className="relative flex justify-center text-sm">
           <span className="px-2 bg-white/90 text-[#8B7355] font-light">
-            Got a tasting code?
+            {t("auth.got_tasting_code")}
           </span>
         </div>
       </div>
@@ -144,7 +146,7 @@ export default function LoginPage() {
           className="w-full h-11 rounded-xl border-2 border-[#22C55E]/40 bg-[#22C55E]/5 text-[#22C55E] text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#22C55E]/10 transition-colors"
         >
           <Users className="w-4 h-4" />
-          Join a Tasting Session
+          {t("home.join_tasting")}
         </button>
       ) : (
         <div className="flex gap-2">
@@ -152,7 +154,7 @@ export default function LoginPage() {
             type="text"
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, "").slice(0, 6))}
-            placeholder="Enter code"
+            placeholder={t("home.enter_code")}
             maxLength={6}
             autoFocus
             className="flex-1 h-11 rounded-xl border-2 border-[#22C55E]/40 bg-[#22C55E]/5 px-4 text-center font-mono text-lg tracking-[0.3em] text-[#1A1A1A] placeholder:text-[#8B7355]/40 focus:outline-none focus:ring-2 focus:ring-[#22C55E]/30 focus:border-[#22C55E]"
@@ -174,7 +176,7 @@ export default function LoginPage() {
             className="h-11 px-5 rounded-xl bg-[#22C55E] text-white font-medium text-sm flex items-center gap-1.5 disabled:opacity-40 transition-opacity"
           >
             <ArrowRight className="w-4 h-4" />
-            Join
+            {t("home.join")}
           </button>
         </div>
       )}

@@ -16,6 +16,7 @@ export async function GET(request: Request) {
         defaultCurrency: users.defaultCurrency,
         beverageType: users.beverageType,
         scoringMode: users.scoringMode,
+        preferredLanguage: users.preferredLanguage,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -58,6 +59,7 @@ export async function PATCH(request: Request) {
     if (body.currency !== undefined) updateData.defaultCurrency = body.currency;
     if (body.beverageType !== undefined) updateData.beverageType = body.beverageType;
     if (body.scoringMode !== undefined) updateData.scoringMode = body.scoringMode;
+    if (body.preferredLanguage !== undefined) updateData.preferredLanguage = body.preferredLanguage;
 
     const updated = await db
       .update(users)
@@ -70,6 +72,7 @@ export async function PATCH(request: Request) {
         defaultCurrency: users.defaultCurrency,
         beverageType: users.beverageType,
         scoringMode: users.scoringMode,
+        preferredLanguage: users.preferredLanguage,
         createdAt: users.createdAt,
       });
 

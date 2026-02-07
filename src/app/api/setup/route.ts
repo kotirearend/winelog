@@ -185,6 +185,11 @@ export async function GET() {
       ALTER TABLE tasting_entries ADD COLUMN IF NOT EXISTS parent_entry_id UUID;
     `);
 
+    // Migration: add preferred_language to users
+    await sql.unsafe(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_language VARCHAR(5);
+    `);
+
     await sql.end();
 
     return NextResponse.json({

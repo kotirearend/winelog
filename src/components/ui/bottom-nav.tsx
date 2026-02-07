@@ -4,19 +4,21 @@ import React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Wine, Beer, ClipboardList, Settings } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useTranslation } from "@/lib/i18n-context";
 import { cn } from "@/lib/utils";
 
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { beverageType } = useAuth();
+  const { t } = useTranslation();
   const isBeer = beverageType === "beer";
 
   const NAV_ITEMS = [
-    { icon: Home, label: "Home", path: "/" },
-    { icon: isBeer ? Beer : Wine, label: isBeer ? "Collection" : "Cellar", path: "/bottles" },
-    { icon: ClipboardList, label: "Tastings", path: "/tastings" },
-    { icon: Settings, label: "Settings", path: "/settings" },
+    { icon: Home, label: t("nav.home"), path: "/" },
+    { icon: isBeer ? Beer : Wine, label: t(`nav.cellar_${beverageType}`), path: "/bottles" },
+    { icon: ClipboardList, label: t("nav.tastings"), path: "/tastings" },
+    { icon: Settings, label: t("nav.settings"), path: "/settings" },
   ];
 
   const isActive = (path: string) => {

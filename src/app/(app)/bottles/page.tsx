@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Loading } from "@/components/ui/loading";
 import { useAuth } from "@/lib/auth-context";
+import { useTranslation } from "@/lib/i18n-context";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,7 @@ interface Bottle {
 export default function BottlesPage() {
   const router = useRouter();
   const { beverageType } = useAuth();
+  const { t, language } = useTranslation();
   const isBeer = beverageType === "beer";
   const [bottles, setBottles] = useState<Bottle[]>([]);
   const [allBottlesRaw, setAllBottlesRaw] = useState<Bottle[]>([]);
@@ -162,6 +164,15 @@ export default function BottlesPage() {
     setSelectedGrape(null);
   };
 
+  const formatDate = (dateString: string): string => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString(language || "en-US");
+    } catch {
+      return dateString;
+    }
+  };
+
   if (isLoading && bottles.length === 0) {
     return <Loading variant="page" />;
   }
@@ -169,7 +180,7 @@ export default function BottlesPage() {
   return (
     <div className="min-h-screen bg-[#FDFBF7]">
       <PageHeader
-        title={isBeer ? "My Collection" : "My Cellar"}
+        title={t(`bottles.page_title_${beverageType}`)}
         variant="wine"
         action={
           <Button
@@ -178,24 +189,24 @@ export default function BottlesPage() {
             className="flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
-            <span className="hidden sm:inline">Add Bottle</span>
+            <span className="hidden sm:inline">{t(`bottles.add_${beverageType}`)}</span>
           </Button>
         }
       />
 
       <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-4">
         <SearchInput
-          placeholder="Search by name or producer..."
+          placeholder={t(`bottles.search_placeholder_${beverageType}`)}
           onChangeDebounced={setSearch}
         />
 
         {/* Status filter tabs */}
         <div className="flex gap-1 bg-[#F5F1EB] p-1 rounded-xl">
           {[
-            { value: "in_cellar", label: "In Cellar" },
-            { value: "consumed", label: "Consumed" },
-            { value: "archived", label: "Archived" },
-            { value: "all", label: "All" },
+            { value: "in_cellar", label: t("bottles.in_stock") },
+            { value: "consumed", label: t("bottles.consumed") },
+            { value: "archived", label: t("bottles.archived") },
+            { value: "all", label: t("bottles.all") },
           ].map((tab) => (
             <button
               key={tab.value}
@@ -224,7 +235,7 @@ export default function BottlesPage() {
         >
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4" />
-            <span>Filters</span>
+            <span>{t("bottles.filters")}</span>
             {activeFilterCount > 0 && (
               <span className="w-5 h-5 rounded-full bg-[#7C2D36] text-white text-xs flex items-center justify-center font-bold">
                 {activeFilterCount}
@@ -270,7 +281,7 @@ export default function BottlesPage() {
                   onClick={clearAllFilters}
                   className="text-xs text-[#6B7280] underline"
                 >
-                  Clear all
+                  {t("bottles.clear_all")}
                 </button>
               </div>
             )}
@@ -278,7 +289,7 @@ export default function BottlesPage() {
             {/* Location */}
             {locations.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-2">Location</p>
+                <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-2">{t("bottles.location")}</p>
                 <div className="flex gap-2 flex-wrap">
                   <button
                     onClick={() => setSelectedLocationId(null)}
@@ -289,7 +300,7 @@ export default function BottlesPage() {
                         : "bg-[#F5F1EB] text-[#6B7280] hover:bg-[#E5E1DB]"
                     )}
                   >
-                    All
+                    {t("bottles.all")}
                   </button>
                   {locations.map((loc) => (
                     <button
@@ -314,7 +325,7 @@ export default function BottlesPage() {
               <div>
                 <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-2">
                   <MapPin className="w-3 h-3 inline mr-1" />
-                  Region
+                  {t("bottles.region")}
                 </p>
                 <div className="flex gap-2 flex-wrap">
                   {availableRegions.slice(0, 12).map(({ name, count }) => (
@@ -340,7 +351,7 @@ export default function BottlesPage() {
               <div>
                 <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-2">
                   <Grape className="w-3 h-3 inline mr-1" />
-                  Grape
+                  {t(isBeer ? "bottles.style" : "bottles.grape")}
                 </p>
                 <div className="flex gap-2 flex-wrap">
                   {availableGrapes.slice(0, 12).map(({ name, count }) => (
@@ -380,13 +391,13 @@ export default function BottlesPage() {
         {bottles.length === 0 && !isLoading ? (
           <EmptyState
             icon={isBeer ? <Beer className="w-12 h-12 text-amber-700" /> : <Wine className="w-12 h-12 text-[#7C2D36]" />}
-            title={activeFilterCount > 0 ? "No matches" : (isBeer ? "No beers in your collection yet" : "No bottles in your cellar yet")}
-            description={activeFilterCount > 0 ? "Try adjusting your filters." : (isBeer ? "Add your first beer to get started." : "Add your first bottle to get started.")}
+            title={activeFilterCount > 0 ? t("bottles.no_results") : t(`bottles.empty_${beverageType}`)}
+            description={activeFilterCount > 0 ? t("bottles.try_adjusting") : t(`bottles.empty_desc_${beverageType}`)}
             action={activeFilterCount > 0 ? {
-              label: "Clear Filters",
+              label: t("bottles.clear_filters"),
               onClick: clearAllFilters,
             } : {
-              label: isBeer ? "Add Beer" : "Add Bottle",
+              label: t(`bottles.add_${beverageType}`),
               onClick: handleAddButton,
             }}
           />
@@ -456,7 +467,7 @@ export default function BottlesPage() {
                   <div className="mt-2.5 flex items-center justify-between">
                     {bottle.quantity > 1 ? (
                       <span className="text-[11px] font-bold text-[#7C2D36] bg-[#7C2D36]/10 px-2 py-0.5 rounded-full">
-                        ×{bottle.quantity}
+                        {t("bottles.qty", { count: bottle.quantity })}
                       </span>
                     ) : (
                       <span />

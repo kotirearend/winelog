@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/components/ui/toast";
+import { useTranslation } from "@/lib/i18n-context";
 
 const CURRENCIES = [
   { code: "GBP", label: "British Pound (£)" },
@@ -24,6 +25,7 @@ export default function SignupPage() {
   const router = useRouter();
   const { signup, isLoading } = useAuth();
   const { addToast } = useToast();
+  const { t } = useTranslation();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -37,10 +39,10 @@ export default function SignupPage() {
 
     try {
       await signup(email, password, name, defaultCurrency);
-      addToast("Account created successfully", "success");
+      addToast(t("auth.signup_success"), "success");
       router.push("/");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Signup failed";
+      const message = err instanceof Error ? err.message : t("auth.signup_failed");
       setError(message);
       addToast(message, "error");
     }
@@ -50,9 +52,9 @@ export default function SignupPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-3">
-        <h2 className="text-3xl font-bold text-[#3A0F18]">Join Winelog</h2>
+        <h2 className="text-3xl font-bold text-[#3A0F18]">{t("auth.signup_title")}</h2>
         <p className="text-[#8B7355] font-light">
-          Create your account to begin your wine journey
+          {t("auth.signup_subtitle")}
         </p>
       </div>
 
@@ -82,7 +84,7 @@ export default function SignupPage() {
 
         {/* Full Name Input */}
         <Input
-          label="Full Name"
+          label={t("auth.full_name_label")}
           type="text"
           placeholder="John Doe"
           value={name}
@@ -93,7 +95,7 @@ export default function SignupPage() {
 
         {/* Email Input */}
         <Input
-          label="Email Address"
+          label={t("auth.email_label")}
           type="email"
           placeholder="you@example.com"
           value={email}
@@ -104,7 +106,7 @@ export default function SignupPage() {
 
         {/* Password Input */}
         <Input
-          label="Password"
+          label={t("auth.password_label")}
           type="password"
           placeholder="••••••••"
           value={password}
@@ -116,7 +118,7 @@ export default function SignupPage() {
         {/* Currency Select */}
         <div className="flex flex-col gap-3">
           <label className="text-sm font-semibold text-[#3A0F18]">
-            Default Currency
+            {t("auth.default_currency")}
           </label>
           <select
             value={defaultCurrency}
@@ -140,7 +142,7 @@ export default function SignupPage() {
           isLoading={isLoading}
           disabled={isLoading}
         >
-          Create Account
+          {t("auth.create_account_btn")}
         </Button>
       </form>
 
@@ -151,7 +153,7 @@ export default function SignupPage() {
         </div>
         <div className="relative flex justify-center text-sm">
           <span className="px-2 bg-white/90 text-[#8B7355] font-light">
-            Already a member?
+            {t("auth.already_member")}
           </span>
         </div>
       </div>
@@ -162,7 +164,7 @@ export default function SignupPage() {
           href="/login"
           className="text-[#D4A847] font-medium hover:text-[#FBBF24] transition-colors underline"
         >
-          Sign in to your account
+          {t("auth.sign_in_link")}
         </Link>
       </p>
     </div>

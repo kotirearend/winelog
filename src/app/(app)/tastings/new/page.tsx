@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
+import { useTranslation } from "@/lib/i18n-context";
 import { api } from "@/lib/api-client";
 
 interface NewTastingForm {
@@ -20,6 +21,7 @@ interface NewTastingForm {
 export default function NewTastingPage() {
   const router = useRouter();
   const { beverageType } = useAuth();
+  const { t } = useTranslation();
   const isBeer = beverageType === "beer";
   const [formData, setFormData] = useState<NewTastingForm>(() => {
     const now = new Date();
@@ -59,15 +61,15 @@ export default function NewTastingPage() {
     const newErrors: Partial<Record<keyof NewTastingForm, string>> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+      newErrors.name = t("tastings.error_name_required");
     }
 
     if (!formData.date) {
-      newErrors.date = "Date is required";
+      newErrors.date = t("tastings.error_date_required");
     }
 
     if (!formData.time) {
-      newErrors.time = "Time is required";
+      newErrors.time = t("tastings.error_time_required");
     }
 
     setErrors(newErrors);
@@ -101,7 +103,7 @@ export default function NewTastingPage() {
       router.push(`/tastings/${tastingId}`);
     } catch (err) {
       console.error("Failed to create tasting:", err);
-      setSubmitError("Failed to create tasting. Please try again.");
+      setSubmitError(t("tastings.error_create_failed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -109,7 +111,7 @@ export default function NewTastingPage() {
 
   return (
     <div className="min-h-screen bg-cream">
-      <PageHeader title="New Tasting" showBack variant="wine" />
+      <PageHeader title={t("tastings.new_title")} showBack variant="wine" />
 
       <div className="p-4 sm:p-6 max-w-2xl mx-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -121,9 +123,9 @@ export default function NewTastingPage() {
 
           <div>
             <Input
-              label="Tasting Name"
+              label={t("tastings.session_name")}
               name="name"
-              placeholder={isBeer ? "e.g. IPA Showdown" : "e.g. Pinot Noir Lineup"}
+              placeholder={t("tastings.session_placeholder")}
               value={formData.name}
               onChange={handleChange}
               error={errors.name}
@@ -134,7 +136,7 @@ export default function NewTastingPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <Input
-                label="Date"
+                label={t("tastings.date")}
                 name="date"
                 type="date"
                 value={formData.date}
@@ -146,7 +148,7 @@ export default function NewTastingPage() {
 
             <div>
               <Input
-                label="Time"
+                label={t("tastings.time")}
                 name="time"
                 type="time"
                 value={formData.time}
@@ -159,9 +161,9 @@ export default function NewTastingPage() {
 
           <div>
             <Input
-              label="Venue"
+              label={t("tastings.venue")}
               name="venue"
-              placeholder={isBeer ? "e.g. The Craft Beer Pub" : "e.g. Downtown Wine Bar"}
+              placeholder={t("tastings.venue_placeholder")}
               value={formData.venue}
               onChange={handleChange}
             />
@@ -169,9 +171,9 @@ export default function NewTastingPage() {
 
           <div>
             <Input
-              label="Participants"
+              label={t("tastings.participants")}
               name="participants"
-              placeholder="e.g. Sarah, John, Mike"
+              placeholder={t("tastings.participants_placeholder")}
               value={formData.participants}
               onChange={handleChange}
             />
@@ -179,11 +181,11 @@ export default function NewTastingPage() {
 
           <div className="flex flex-col gap-2.5">
             <label className="text-sm font-semibold text-wine-950">
-              Notes
+              {t("tastings.notes")}
             </label>
             <textarea
               name="notes"
-              placeholder="Any additional notes about this tasting..."
+              placeholder={t("tastings.notes_placeholder")}
               value={formData.notes}
               onChange={handleChange}
               className="flex min-h-32 w-full rounded-xl border-2 border-warm-border bg-white px-4 py-3 text-sm text-wine-950 placeholder:text-wine-500 transition-all duration-200 focus:outline-none focus:border-wine-800 focus:ring-2 focus:ring-wine-800/20 disabled:cursor-not-allowed disabled:bg-cream-dark disabled:text-wine-600"
@@ -198,7 +200,7 @@ export default function NewTastingPage() {
               disabled={isSubmitting}
               className="flex-1 rounded-xl"
             >
-              Create Tasting
+              {t("tastings.create")}
             </Button>
             <Button
               type="button"
@@ -207,7 +209,7 @@ export default function NewTastingPage() {
               disabled={isSubmitting}
               className="flex-1 rounded-xl"
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
           </div>
         </form>

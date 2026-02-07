@@ -11,6 +11,7 @@ export const users = pgTable('users', {
   defaultCurrency: char('default_currency', { length: 3 }).default('GBP'),
   beverageType: varchar('beverage_type', { length: 10 }).default('wine').notNull(),
   scoringMode: varchar('scoring_mode', { length: 10 }).default('casual').notNull(),
+  preferredLanguage: varchar('preferred_language', { length: 5 }),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });

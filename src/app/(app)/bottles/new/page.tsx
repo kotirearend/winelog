@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PhotoCapture, ScanResult } from "@/components/ui/photo-capture";
 import { useAuth } from "@/lib/auth-context";
+import { useTranslation } from "@/lib/i18n-context";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -70,6 +71,7 @@ const COMMON_BEER_STYLES = [
 export default function AddBottlePage() {
   const router = useRouter();
   const { beverageType } = useAuth();
+  const { t } = useTranslation();
   const isBeer = beverageType === "beer";
   const [isLoading, setIsLoading] = useState(false);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
@@ -207,7 +209,7 @@ export default function AddBottlePage() {
     const newErrors: Record<string, string> = {};
 
     if (!name.trim()) {
-      newErrors.name = isBeer ? "Beer name is required" : "Wine name is required";
+      newErrors.name = t(`bottles.name_required_${beverageType}`);
     }
 
     setErrors(newErrors);
@@ -277,7 +279,7 @@ export default function AddBottlePage() {
       }
     } catch (err) {
       console.error("Failed to save bottle:", err);
-      setErrors({ submit: "Failed to save bottle. Please try again." });
+      setErrors({ submit: t("bottles.save_failed") });
     } finally {
       setIsLoading(false);
     }
@@ -285,7 +287,7 @@ export default function AddBottlePage() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] pb-40 sm:pb-0">
-      <PageHeader title={isBeer ? "Add Beer" : "Add Wine"} showBack variant="wine" />
+      <PageHeader title={t(`bottles.new_title_${beverageType}`)} showBack variant="wine" />
 
       <form onSubmit={handleSubmit} className="p-4 sm:p-6 max-w-2xl mx-auto space-y-6">
         {/* Photo Capture */}
@@ -303,8 +305,8 @@ export default function AddBottlePage() {
         <div>
           <Input
             ref={producerInputRef}
-            label={isBeer ? "Brewery" : "Wine Maker"}
-            placeholder={isBeer ? "e.g., BrewDog" : "e.g., Château Margaux"}
+            label={t(`bottles.producer_${beverageType}`)}
+            placeholder={t(`bottles.producer_placeholder_${beverageType}`)}
             value={producer}
             onChange={(e) => setProducer(e.target.value)}
             autoFocus
@@ -315,9 +317,9 @@ export default function AddBottlePage() {
         {!isBeer && (
           <div>
             <Input
-              label="Vintage"
+              label={t("bottles.vintage")}
               type="number"
-              placeholder="e.g., 2018"
+              placeholder={t("bottles.vintage_placeholder")}
               value={vintage}
               onChange={(e) => setVintage(e.target.value)}
               min="1900"
@@ -329,8 +331,8 @@ export default function AddBottlePage() {
         {/* Wine Name */}
         <div>
           <Input
-            label={isBeer ? "Beer Name" : "Wine Name"}
-            placeholder={isBeer ? "e.g., Punk IPA" : "e.g., Grand Vin"}
+            label={t(`bottles.name_${beverageType}`)}
+            placeholder={t(`bottles.name_placeholder_${beverageType}`)}
             value={name}
             onChange={(e) => setName(e.target.value)}
             error={errors.name}
@@ -341,7 +343,7 @@ export default function AddBottlePage() {
         {/* Grapes - Tag Chips */}
         <div className="flex flex-col gap-2">
           <label className="text-sm font-semibold text-[#1A1A1A]">
-            {isBeer ? "Style" : "Grapes"}
+            {t(isBeer ? "bottles.grapes_beer" : "bottles.grapes")}
           </label>
 
           {/* Selected grape chips */}
@@ -371,7 +373,7 @@ export default function AddBottlePage() {
             <input
               ref={grapeInputRef}
               type="text"
-              placeholder={grapes.length > 0 ? (isBeer ? "Add another style..." : "Add another grape...") : (isBeer ? "e.g., IPA" : "e.g., Cabernet Sauvignon")}
+              placeholder={grapes.length > 0 ? t(isBeer ? "bottles.add_style" : "bottles.add_grape") : t(isBeer ? "bottles.grape_placeholder_beer" : "bottles.grape_placeholder")}
               value={grapeInput}
               onChange={(e) => {
                 setGrapeInput(e.target.value);
@@ -407,11 +409,11 @@ export default function AddBottlePage() {
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-[#1A1A1A] flex items-center gap-2">
               <Globe className="w-4 h-4 text-[#7C2D36]" />
-              Country of Origin
+              {t("bottles.country")}
             </label>
             <input
               type="text"
-              placeholder="e.g., France"
+              placeholder={t("bottles.country_placeholder")}
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               className="h-11 rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-2 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20"
@@ -423,13 +425,13 @@ export default function AddBottlePage() {
         {!isBeer && (
           <div className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-[#1A1A1A]">
-              Region
+              {t("bottles.region_label")}
             </label>
             <div className="relative">
               <input
                 ref={regionInputRef}
                 type="text"
-                placeholder="e.g., Bordeaux, Barossa Valley"
+                placeholder={t("bottles.region_placeholder")}
                 value={region}
                 onChange={(e) => {
                   setRegion(e.target.value);
@@ -472,10 +474,10 @@ export default function AddBottlePage() {
         {/* Notes */}
         <div className="flex flex-col gap-2">
           <label className="text-sm font-semibold text-[#1A1A1A]">
-            Notes
+            {t("bottles.notes")}
           </label>
           <textarea
-            placeholder={isBeer ? "e.g., Got this from the craft beer shop, limited edition..." : "e.g., Recommended by sommelier, pairs well with lamb..."}
+            placeholder={t(`bottles.notes_placeholder_${beverageType}`)}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             maxLength={500}
@@ -490,7 +492,7 @@ export default function AddBottlePage() {
         <div className="flex flex-col gap-2">
           <label className="text-sm font-semibold text-[#1A1A1A] flex items-center gap-2">
             <MapPin className="w-4 h-4 text-[#7C2D36]" />
-            Storage Location
+            {t("bottles.storage_location")}
           </label>
 
           {!showAddLocation ? (
@@ -500,7 +502,7 @@ export default function AddBottlePage() {
                 onChange={(e) => setSelectedLocationId(e.target.value)}
                 className="flex-1 h-11 rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-2 text-sm text-[#1A1A1A] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20"
               >
-                <option value="">No location</option>
+                <option value="">{t("bottles.no_location")}</option>
                 {locations.map((loc) => (
                   <option key={loc.id} value={loc.id}>
                     {loc.name}
@@ -514,13 +516,13 @@ export default function AddBottlePage() {
                 className="rounded-xl"
               >
                 <Plus className="w-4 h-4 mr-1" />
-                Add
+                {t("common.add")}
               </Button>
             </div>
           ) : (
             <div className="flex gap-2">
               <Input
-                placeholder="New location name"
+                placeholder={t("bottles.new_location")}
                 value={newLocationName}
                 onChange={(e) => setNewLocationName(e.target.value)}
                 className="flex-1"
@@ -531,7 +533,7 @@ export default function AddBottlePage() {
                 onClick={() => { setShowAddLocation(false); setNewLocationName(""); }}
                 className="rounded-xl"
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
             </div>
           )}
@@ -541,8 +543,8 @@ export default function AddBottlePage() {
         {selectedLocationId && (
           <div>
             <Input
-              label="Shelf / Bin"
-              placeholder="e.g., Shelf 3, Bottom right"
+              label={t("bottles.shelf_bin")}
+              placeholder={t("bottles.shelf_placeholder")}
               value={subLocation}
               onChange={(e) => setSubLocation(e.target.value)}
             />
@@ -560,14 +562,14 @@ export default function AddBottlePage() {
           ) : (
             <ChevronDown className="w-4 h-4" />
           )}
-          {showMoreDetails ? "Hide Purchase Details" : "Add Purchase Details"}
+          {showMoreDetails ? t("bottles.hide_purchase_details") : t("bottles.add_purchase_details")}
         </button>
 
         {/* Expandable Details */}
         {showMoreDetails && (
           <Card variant="outlined" className="p-5 rounded-2xl space-y-5">
             <Input
-              label="Purchase Date"
+              label={t("bottles.purchase_date")}
               type="date"
               value={purchaseDate}
               onChange={(e) => setPurchaseDate(e.target.value)}
@@ -575,37 +577,41 @@ export default function AddBottlePage() {
 
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-[#1A1A1A]">
-                Purchase Source
+                {t("bottles.purchase_source")}
               </label>
               <div className="flex gap-2 flex-wrap">
-                {PURCHASE_SOURCES.map((source) => (
+                {[
+                  { key: "Restaurant", label: t("bottles.source_restaurant") },
+                  { key: "Shop", label: t("bottles.source_shop") },
+                  { key: "Other", label: t("bottles.source_other") },
+                ].map(({ key, label }) => (
                   <button
-                    key={source}
+                    key={key}
                     type="button"
-                    onClick={() => setPurchaseSource(source)}
+                    onClick={() => setPurchaseSource(key)}
                     className={cn(
                       "inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium transition-all",
-                      purchaseSource === source
+                      purchaseSource === key
                         ? "bg-[#7C2D36] text-white shadow-md shadow-[#7C2D36]/20"
                         : "bg-white border-2 border-[#E5E1DB] text-[#1A1A1A] hover:border-[#7C2D36]/30 hover:bg-[#FDF2F4]"
                     )}
                   >
-                    {source}
+                    {label}
                   </button>
                 ))}
               </div>
             </div>
 
             <Input
-              label="Source Name"
-              placeholder="e.g., Restaurant name or store"
+              label={t("bottles.source_name")}
+              placeholder={t("bottles.source_name_placeholder")}
               value={purchaseSourceName}
               onChange={(e) => setPurchaseSourceName(e.target.value)}
             />
 
             <div className="flex gap-4">
               <Input
-                label="Price"
+                label={t("bottles.price")}
                 type="number"
                 placeholder="0.00"
                 value={price}
@@ -617,7 +623,7 @@ export default function AddBottlePage() {
 
               <div className="flex flex-col gap-2 flex-1">
                 <label className="text-sm font-semibold text-[#1A1A1A]">
-                  Currency
+                  {t("bottles.currency")}
                 </label>
                 <select
                   value={currency}
@@ -637,7 +643,7 @@ export default function AddBottlePage() {
             </div>
 
             <Input
-              label="Quantity"
+              label={t("bottles.quantity")}
               type="number"
               placeholder="1"
               value={quantity}
@@ -663,7 +669,7 @@ export default function AddBottlePage() {
             className="w-full rounded-xl"
             size="lg"
           >
-            {isBeer ? "Save to Collection" : "Save to Cellar"}
+            {t(`bottles.save_${beverageType}`)}
           </Button>
         </div>
       </form>

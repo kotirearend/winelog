@@ -172,7 +172,7 @@ export const drinkLogCreateSchema = z.object({
   context: z.string().optional(),
   venue: z.string().optional(),
   rating: z.number().int().min(0).max(100).optional(),
-  tastingNotes: z.record(z.string()).optional(),
+  tastingNotes: z.record(z.unknown()).nullable().optional(),
   notes: z.string().optional(),
 });
 

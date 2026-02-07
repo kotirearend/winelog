@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { useTranslation } from "@/lib/i18n-context";
 import { api } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ interface Tasting {
 export default function HomePage() {
   const router = useRouter();
   const { user, beverageType } = useAuth();
+  const { t, language } = useTranslation();
   const isBeer = beverageType === "beer";
   const [allBottles, setAllBottles] = useState<Bottle[]>([]);
   const [tastings, setTastings] = useState<Tasting[]>([]);
@@ -86,7 +88,7 @@ export default function HomePage() {
 
   const formatDate = (dateString: string) => {
     try {
-      return new Date(dateString).toLocaleDateString("en-GB", {
+      return new Date(dateString).toLocaleDateString(language, {
         day: "numeric",
         month: "short",
         year: "numeric",
@@ -106,9 +108,9 @@ export default function HomePage() {
             <WinelogLogo size="sm" variant="icon" color="cream" />
             <div>
               <h1 className="text-2xl font-bold tracking-tight">
-                Hey, {user?.name?.split(" ")[0]}
+                {t("home.greeting", { name: user?.name?.split(" ")[0] || "" })}
               </h1>
-              <p className="text-white/50 text-xs mt-0.5">{isBeer ? "Your beer collection at a glance" : "Your wine collection at a glance"}</p>
+              <p className="text-white/50 text-xs mt-0.5">{t(`home.subtitle_${beverageType}`)}</p>
             </div>
           </div>
 
@@ -118,13 +120,13 @@ export default function HomePage() {
               <div className="text-3xl font-bold text-white">
                 {bottlesLoading ? "—" : totalBottlesInStock}
               </div>
-              <div className="text-white/60 text-xs mt-0.5">{isBeer ? "Beers in Collection" : "Bottles in Cellar"}</div>
+              <div className="text-white/60 text-xs mt-0.5">{t(`home.stat_bottles_${beverageType}`)}</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 text-center">
               <div className="text-3xl font-bold text-white">
                 {tastingsLoading ? "—" : tastings.length}
               </div>
-              <div className="text-white/60 text-xs mt-0.5">Tasting Sessions</div>
+              <div className="text-white/60 text-xs mt-0.5">{t("home.stat_tastings")}</div>
             </div>
           </div>
 
@@ -132,7 +134,7 @@ export default function HomePage() {
           <Link href="/bottles/new" className="block">
             <Button variant="gold" className="w-full h-12 text-base font-semibold rounded-xl flex items-center justify-center gap-2 shadow-lg">
               <Plus className="w-5 h-5" />
-              {isBeer ? "Quick Add Beer" : "Quick Add Bottle"}
+              {t(`home.quick_add_${beverageType}`)}
             </Button>
           </Link>
 
@@ -143,7 +145,7 @@ export default function HomePage() {
               className="w-full mt-3 h-10 rounded-xl border border-white/30 bg-white/10 backdrop-blur-sm text-white/90 text-sm font-medium flex items-center justify-center gap-2 hover:bg-white/20 transition-colors"
             >
               <Users className="w-4 h-4" />
-              Join a Tasting Session
+              {t("home.join_tasting")}
             </button>
           ) : (
             <div className="mt-3 flex gap-2">
@@ -151,7 +153,7 @@ export default function HomePage() {
                 type="text"
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, "").slice(0, 6))}
-                placeholder="Enter code"
+                placeholder={t("home.enter_code")}
                 maxLength={6}
                 autoFocus
                 className="flex-1 h-10 rounded-xl bg-white/15 border border-white/30 text-white placeholder:text-white/40 px-4 text-center font-mono text-lg tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-[#D4A847]/50"
@@ -173,7 +175,7 @@ export default function HomePage() {
                 className="h-10 px-4 rounded-xl bg-[#22C55E] text-white font-medium text-sm flex items-center gap-1 disabled:opacity-40 transition-opacity"
               >
                 <ArrowRight className="w-4 h-4" />
-                Join
+                {t("home.join")}
               </button>
             </div>
           )}
@@ -188,10 +190,10 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold text-[#1A1A1A] flex items-center gap-2">
               {isBeer ? <Beer className="w-5 h-5 text-[#B45309]" /> : <Wine className="w-5 h-5 text-[#7C2D36]" />}
-              {isBeer ? "Recent Beers" : "Recent Bottles"}
+              {t(`home.recent_bottles_${beverageType}`)}
             </h2>
             <Link href="/bottles" className="text-[#D4A847] text-sm font-semibold">
-              View all
+              {t("home.view_all")}
             </Link>
           </div>
 
@@ -200,9 +202,9 @@ export default function HomePage() {
           ) : recentBottles.length === 0 ? (
             <EmptyState
               icon={isBeer ? <Beer className="w-10 h-10" /> : <Wine className="w-10 h-10" />}
-              title={isBeer ? "No beers yet" : "No bottles yet"}
-              description={isBeer ? "Add your first beer to start tracking" : "Add your first bottle to start tracking"}
-              action={{ label: isBeer ? "Add Beer" : "Add Bottle", onClick: () => (window.location.href = "/bottles/new") }}
+              title={t(`home.no_bottles_${beverageType}`)}
+              description={t(`home.add_first_${beverageType}`)}
+              action={{ label: t(`home.add_bottle_${beverageType}`), onClick: () => (window.location.href = "/bottles/new") }}
             />
           ) : (
             <div className="space-y-2">
@@ -260,10 +262,10 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold text-[#1A1A1A] flex items-center gap-2">
               <ClipboardList className="w-5 h-5 text-[#7C2D36]" />
-              Recent Tastings
+              {t("home.recent_tastings")}
             </h2>
             <Link href="/tastings" className="text-[#D4A847] text-sm font-semibold">
-              View all
+              {t("home.view_all")}
             </Link>
           </div>
 
@@ -272,9 +274,9 @@ export default function HomePage() {
           ) : recentTastings.length === 0 ? (
             <EmptyState
               icon={<ClipboardList className="w-10 h-10" />}
-              title="No tastings yet"
-              description={isBeer ? "Create a tasting session to start scoring beers" : "Create a tasting session to start scoring wines"}
-              action={{ label: "Start Tasting", onClick: () => (window.location.href = "/tastings/new") }}
+              title={t("home.no_tastings")}
+              description={t(`home.no_tastings_desc_${beverageType}`)}
+              action={{ label: t("home.start_tasting"), onClick: () => (window.location.href = "/tastings/new") }}
             />
           ) : (
             <div className="space-y-2">
