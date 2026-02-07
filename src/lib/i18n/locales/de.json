@@ -191,6 +191,8 @@
   "scan.photo_prompt_desktop": "Klicken um ein Foto hochzuladen",
   "scan.auto_fill_hint": "Wir füllen die Details vom Etikett automatisch aus",
   "scan.drag_drop": "oder ziehe und lasse fallen",
+  "scan.scanning_form": "Etikett wird gelesen — Felder werden automatisch ausgefüllt...",
+  "scan.wait_scanning": "Etikett scannen...",
 
   "guest.join_title": "Verkostung beitreten",
   "guest.enter_name": "Gib deinen Namen ein",

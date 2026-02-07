@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronUp, Globe, MapPin, Plus, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Globe, Loader2, MapPin, Plus, X } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -300,6 +300,16 @@ export default function AddBottlePage() {
             className=""
           />
         </Card>
+
+        {/* Scanning banner — shows while OCR is running */}
+        {isScanning && (
+          <div className="flex items-center gap-3 rounded-xl bg-[#7C2D36]/10 border border-[#7C2D36]/20 px-4 py-3 animate-pulse">
+            <Loader2 className="w-4 h-4 text-[#7C2D36] animate-spin" />
+            <span className="text-sm font-medium text-[#7C2D36]">
+              {t("scan.scanning_form")}
+            </span>
+          </div>
+        )}
 
         {/* Wine Maker */}
         <div>
@@ -663,13 +673,13 @@ export default function AddBottlePage() {
         <div className="fixed bottom-20 left-0 right-0 p-4 bg-white/80 backdrop-blur-lg border-t border-[#E5E1DB] sm:static sm:bottom-auto sm:border-t-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none z-50">
           <Button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isScanning}
             isLoading={isLoading}
             variant="gold"
             className="w-full rounded-xl"
             size="lg"
           >
-            {t(`bottles.save_${beverageType}`)}
+            {isScanning ? t("scan.wait_scanning") : t(`bottles.save_${beverageType}`)}
           </Button>
         </div>
       </form>
