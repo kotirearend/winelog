@@ -1,30 +1,33 @@
 @import "tailwindcss";
 
+@theme {
+  --color-wine-50: #FDF2F4;
+  --color-wine-100: #FCE4E8;
+  --color-wine-200: #F9CCD4;
+  --color-wine-300: #F4A3B3;
+  --color-wine-400: #EC6B84;
+  --color-wine-500: #E04163;
+  --color-wine-600: #C42348;
+  --color-wine-700: #A31D3D;
+  --color-wine-800: #7C2D36;
+  --color-wine-900: #5C1F28;
+  --color-wine-950: #3A0F18;
+
+  --color-gold-50: #FFFBEB;
+  --color-gold-100: #FEF3C7;
+  --color-gold-200: #FDE68A;
+  --color-gold-300: #FCD34D;
+  --color-gold-400: #FBBF24;
+  --color-gold-500: #D4A847;
+  --color-gold-600: #B8860B;
+
+  --color-cream: #FDFBF7;
+  --color-cream-dark: #F5F1EB;
+  --color-warm-gray: #6B7280;
+  --color-warm-border: #E5E1DB;
+}
+
 :root {
-  --wine-50: #FDF2F4;
-  --wine-100: #FCE4E8;
-  --wine-200: #F9CCD4;
-  --wine-300: #F4A3B3;
-  --wine-400: #EC6B84;
-  --wine-500: #E04163;
-  --wine-600: #C42348;
-  --wine-700: #A31D3D;
-  --wine-800: #7C2D36;
-  --wine-900: #5C1F28;
-  --wine-950: #3A0F18;
-
-  --gold-50: #FFFBEB;
-  --gold-100: #FEF3C7;
-  --gold-200: #FDE68A;
-  --gold-300: #FCD34D;
-  --gold-400: #FBBF24;
-  --gold-500: #D4A847;
-  --gold-600: #B8860B;
-
-  --cream: #FDFBF7;
-  --cream-dark: #F5F1EB;
-  --warm-gray: #6B7280;
-  --warm-border: #E5E1DB;
   --text-primary: #1A1A1A;
   --text-secondary: #6B7280;
   --green: #059669;
