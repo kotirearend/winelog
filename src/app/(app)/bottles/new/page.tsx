@@ -24,6 +24,39 @@ const COMMON_GRAPES = [
   "Trebbiano", "Garganega", "Torrontés",
 ];
 
+const COMMON_REGIONS = [
+  // France
+  "Bordeaux", "Burgundy", "Champagne", "Rhône Valley", "Loire Valley",
+  "Alsace", "Languedoc", "Provence", "Beaujolais", "Chablis",
+  "Saint-Émilion", "Pauillac", "Margaux", "Médoc", "Graves",
+  "Côtes du Rhône", "Châteauneuf-du-Pape", "Sancerre", "Pouilly-Fumé",
+  // Italy
+  "Tuscany", "Piedmont", "Veneto", "Sicily", "Puglia",
+  "Chianti", "Barolo", "Barbaresco", "Brunello di Montalcino",
+  "Valpolicella", "Prosecco", "Soave", "Amalfi Coast",
+  // Spain
+  "Rioja", "Ribera del Duero", "Priorat", "Rías Baixas",
+  "Penedès", "Navarra", "La Mancha", "Jerez",
+  // Portugal
+  "Douro Valley", "Alentejo", "Dão", "Vinho Verde", "Madeira",
+  // Germany & Austria
+  "Mosel", "Rheingau", "Pfalz", "Baden", "Wachau", "Kamptal",
+  // New World — Australia
+  "Barossa Valley", "McLaren Vale", "Hunter Valley", "Yarra Valley",
+  "Margaret River", "Coonawarra", "Clare Valley", "Adelaide Hills",
+  // New World — New Zealand
+  "Marlborough", "Central Otago", "Hawke's Bay", "Martinborough",
+  // New World — South Africa
+  "Stellenbosch", "Franschhoek", "Swartland", "Constantia", "Paarl",
+  // New World — USA
+  "Napa Valley", "Sonoma", "Willamette Valley", "Paso Robles",
+  "Santa Barbara", "Columbia Valley", "Finger Lakes",
+  // New World — South America
+  "Mendoza", "Maipo Valley", "Colchagua Valley", "Casablanca Valley",
+  // Other
+  "Santorini", "Tokaj", "Niagara Peninsula",
+];
+
 const COMMON_BEER_STYLES = [
   "IPA", "DIPA", "NEIPA", "Pale Ale", "APA", "Lager", "Pilsner",
   "Stout", "Imperial Stout", "Porter", "Wheat Beer", "Hefeweizen",
@@ -52,6 +85,7 @@ export default function AddBottlePage() {
   const [showGrapeSuggestions, setShowGrapeSuggestions] = useState(false);
   const [country, setCountry] = useState("");
   const [region, setRegion] = useState("");
+  const [showRegionSuggestions, setShowRegionSuggestions] = useState(false);
 
   // Storage location state
   interface Location { id: string; name: string; }
@@ -73,6 +107,7 @@ export default function AddBottlePage() {
 
   const producerInputRef = useRef<HTMLInputElement>(null);
   const grapeInputRef = useRef<HTMLInputElement>(null);
+  const regionInputRef = useRef<HTMLInputElement>(null);
 
   const fetchLocations = useCallback(async () => {
     try {
@@ -118,6 +153,13 @@ export default function AddBottlePage() {
         (g) =>
           g.toLowerCase().includes(grapeInput.toLowerCase()) &&
           !grapes.includes(g)
+      ).slice(0, 6)
+    : [];
+
+  // Region suggestions filtered by input
+  const filteredRegions = region.trim()
+    ? COMMON_REGIONS.filter(
+        (r) => r.toLowerCase().includes(region.toLowerCase())
       ).slice(0, 6)
     : [];
 
@@ -361,15 +403,53 @@ export default function AddBottlePage() {
           </div>
         )}
 
-        {/* Region — wine only */}
+        {/* Region — wine only, with autocomplete */}
         {!isBeer && (
-          <div>
-            <Input
-              label="Region"
-              placeholder="e.g., Bordeaux, Barossa Valley"
-              value={region}
-              onChange={(e) => setRegion(e.target.value)}
-            />
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-[#1A1A1A]">
+              Region
+            </label>
+            <div className="relative">
+              <input
+                ref={regionInputRef}
+                type="text"
+                placeholder="e.g., Bordeaux, Barossa Valley"
+                value={region}
+                onChange={(e) => {
+                  setRegion(e.target.value);
+                  setShowRegionSuggestions(true);
+                }}
+                onFocus={() => setShowRegionSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowRegionSuggestions(false), 200)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && filteredRegions.length > 0) {
+                    e.preventDefault();
+                    setRegion(filteredRegions[0]);
+                    setShowRegionSuggestions(false);
+                  }
+                }}
+                className="w-full h-11 rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-2 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20"
+              />
+
+              {showRegionSuggestions && filteredRegions.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white rounded-xl border-2 border-[#E5E1DB] shadow-lg overflow-hidden">
+                  {filteredRegions.map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setRegion(r);
+                        setShowRegionSuggestions(false);
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm text-[#1A1A1A] hover:bg-[#FDF2F4] hover:text-[#7C2D36] transition-colors border-b border-[#E5E1DB] last:border-b-0"
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
