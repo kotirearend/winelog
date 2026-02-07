@@ -2,12 +2,21 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getAuthUser } from "@/lib/auth";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
 export async function POST(request: Request) {
   try {
+    // Check API key is configured
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.error("ANTHROPIC_API_KEY is not set");
+      return NextResponse.json(
+        { error: "Scan not configured", code: "NO_API_KEY" },
+        { status: 503 }
+      );
+    }
+
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
+
     // Authenticate — prevents abuse
     await getAuthUser(request);
 
@@ -96,19 +105,33 @@ Set confidence to "high" if the label is clearly readable, "medium" if partially
   } catch (err: unknown) {
     console.error("Scan label error:", err);
 
+    const message = err instanceof Error ? err.message : String(err);
+
     if (err instanceof SyntaxError) {
       return NextResponse.json(
-        { error: "Failed to parse vision response" },
+        { error: "Failed to parse vision response", code: "PARSE_ERROR" },
         { status: 500 }
       );
     }
 
-    if (err instanceof Error && err.message.includes("authorization")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Anthropic SDK auth errors (bad key, expired, etc.)
+    if (message.includes("authentication") || message.includes("api_key") || message.includes("401")) {
+      return NextResponse.json(
+        { error: "Invalid API key", code: "BAD_API_KEY" },
+        { status: 502 }
+      );
+    }
+
+    // User auth failure
+    if (message.includes("authorization") || message.includes("Unauthorized")) {
+      return NextResponse.json(
+        { error: "Unauthorized", code: "UNAUTHORIZED" },
+        { status: 401 }
+      );
     }
 
     return NextResponse.json(
-      { error: "Label scan failed" },
+      { error: "Label scan failed", code: "SCAN_FAILED", detail: message },
       { status: 500 }
     );
   }

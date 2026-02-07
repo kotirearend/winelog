@@ -64,6 +64,8 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
         });
 
         if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error("Scan API error:", response.status, errorData);
           setScanState("offline");
           return;
         }
