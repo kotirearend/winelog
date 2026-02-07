@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Edit2, Check, X, LogOut, Wine, Beer, GraduationCap, Smile, Globe } from "lucide-react";
+import { Plus, Edit2, Check, X, LogOut, Wine, Beer, GraduationCap, Smile } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -242,39 +242,6 @@ export default function SettingsPage() {
           </Card>
         </div>
 
-        {/* Language Section */}
-        <div>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-1 w-1 rounded-full bg-gold-500"></div>
-            <h2 className="text-lg font-semibold text-wine-950 flex items-center gap-2">
-              <Globe className="w-5 h-5" />
-              {t("settings.language")}
-            </h2>
-          </div>
-
-          <Card variant="elevated" className="p-6 rounded-2xl">
-            <p className="text-sm text-wine-700 font-medium mb-4">
-              {t("settings.language_desc")}
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              {SUPPORTED_LOCALES.map((lang: Locale) => (
-                <button
-                  key={lang}
-                  onClick={() => handleLanguageChange(lang)}
-                  className={cn(
-                    "flex flex-col items-center gap-2 p-5 rounded-2xl border-2 transition-all duration-200",
-                    language === lang
-                      ? "border-[#7C2D36] bg-[#7C2D36] text-white shadow-lg shadow-[#7C2D36]/20"
-                      : "border-[#E5E1DB] bg-white text-[#1A1A1A] hover:border-[#7C2D36]/40 hover:bg-[#FDF2F4]"
-                  )}
-                >
-                  <span className="text-sm font-bold">{LOCALE_LABELS[lang]}</span>
-                </button>
-              ))}
-            </div>
-          </Card>
-        </div>
-
         {/* Scoring Mode Section */}
         <div>
           <div className="flex items-center gap-3 mb-4">
@@ -479,6 +446,31 @@ export default function SettingsPage() {
               {t("settings.add_location")}
             </Button>
           )}
+        </div>
+
+        {/* Language Section */}
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-1 w-1 rounded-full bg-gold-500"></div>
+            <h2 className="text-lg font-semibold text-wine-950">{t("settings.language")}</h2>
+          </div>
+
+          <Card variant="elevated" className="p-6 rounded-2xl">
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm text-wine-700 font-medium">{t("settings.language_desc")}</p>
+              <select
+                value={language}
+                onChange={(e) => handleLanguageChange(e.target.value as Locale)}
+                className="rounded-xl border-2 border-warm-border bg-cream px-4 py-2.5 text-sm font-semibold text-wine-950 transition-all duration-200 focus:outline-none focus:border-wine-800 focus:ring-2 focus:ring-wine-800/20 hover:border-wine-200"
+              >
+                {SUPPORTED_LOCALES.map((lang: Locale) => (
+                  <option key={lang} value={lang}>
+                    {LOCALE_LABELS[lang]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </Card>
         </div>
 
         {/* Sign Out Section */}
