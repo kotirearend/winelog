@@ -194,6 +194,8 @@
   "scan.scanning_form": "Leyendo la etiqueta — los campos se llenarán automáticamente...",
   "scan.wait_scanning": "Escaneando etiqueta...",
   "scan.offline": "Escaneo no disponible — rellene manualmente",
+  "scan.take_photo": "Tomar foto",
+  "scan.choose_photo": "Galería",
 
   "guest.join_title": "Unirse a Degustación",
   "guest.enter_name": "Ingresa tu nombre",

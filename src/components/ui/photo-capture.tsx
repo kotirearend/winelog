@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Camera, X, Loader2, Check, AlertTriangle } from "lucide-react";
+import { Camera, ImagePlus, X, Loader2, Check, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n-context";
 
@@ -27,7 +27,8 @@ export interface PhotoCaptureProps {
 const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
   ({ onPhotoSelected, photoUrl, className, enableScan = false, onScanResult, onScanStateChange }, ref) => {
     const { t } = useTranslation();
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const cameraInputRef = React.useRef<HTMLInputElement>(null);
+    const libraryInputRef = React.useRef<HTMLInputElement>(null);
     const [preview, setPreview] = React.useState<string | undefined>(photoUrl);
     const [isMobile, setIsMobile] = React.useState<boolean>(false);
     const [scanState, setScanState] = React.useState<"idle" | "scanning" | "success" | "low-confidence" | "error" | "offline">("idle");
@@ -111,29 +112,39 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
       }
     };
 
-    const handleClick = () => {
-      if (fileInputRef.current) {
-        fileInputRef.current.click();
-      }
+    const handleCameraClick = () => {
+      cameraInputRef.current?.click();
+    };
+
+    const handleLibraryClick = () => {
+      libraryInputRef.current?.click();
     };
 
     const handleRemove = (e: React.MouseEvent) => {
       e.stopPropagation();
       setPreview(undefined);
       setScanState("idle");
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
+      if (libraryInputRef.current) libraryInputRef.current.value = "";
       onPhotoSelected?.(null as any);
     };
 
     return (
       <div ref={ref} className={cn("flex flex-col gap-3", className)}>
+        {/* Camera input — opens camera directly on mobile */}
         <input
-          ref={fileInputRef}
+          ref={cameraInputRef}
           type="file"
           accept="image/*"
-          capture={isMobile ? "environment" : undefined}
+          capture="environment"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        {/* Library input — opens photo picker / file browser */}
+        <input
+          ref={libraryInputRef}
+          type="file"
+          accept="image/*"
           onChange={handleFileChange}
           className="hidden"
         />
@@ -201,9 +212,33 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
               </div>
             )}
           </div>
+        ) : isMobile ? (
+          <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={handleCameraClick}
+                className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#E5E1DB] bg-[#FDFBF7] p-6 transition-colors active:border-[#7C2D36] active:bg-[#F5F1EB]"
+              >
+                <Camera className="w-7 h-7 text-[#7C2D36]" />
+                <span className="text-sm font-medium text-[#1A1A1A]">{t("scan.take_photo")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleLibraryClick}
+                className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#E5E1DB] bg-[#FDFBF7] p-6 transition-colors active:border-[#7C2D36] active:bg-[#F5F1EB]"
+              >
+                <ImagePlus className="w-7 h-7 text-[#7C2D36]" />
+                <span className="text-sm font-medium text-[#1A1A1A]">{t("scan.choose_photo")}</span>
+              </button>
+            </div>
+            {enableScan && (
+              <p className="text-xs text-[#6B7280] text-center">{t("scan.auto_fill_hint")}</p>
+            )}
+          </div>
         ) : (
           <div
-            onClick={handleClick}
+            onClick={handleLibraryClick}
             className={cn(
               "flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-[#E5E1DB] bg-[#FDFBF7] p-8 cursor-pointer transition-colors hover:border-[#7C2D36] hover:bg-[#F5F1EB]",
               "min-h-[200px]"
@@ -212,7 +247,7 @@ const PhotoCapture = React.forwardRef<HTMLDivElement, PhotoCaptureProps>(
             <Camera className="w-8 h-8 text-[#7C2D36]" />
             <div className="text-center">
               <p className="text-sm font-medium text-[#1A1A1A]">
-                {isMobile ? t("scan.photo_prompt_mobile") : t("scan.photo_prompt_desktop")}
+                {t("scan.photo_prompt_desktop")}
               </p>
               <p className="text-xs text-[#6B7280]">
                 {enableScan

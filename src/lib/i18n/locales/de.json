@@ -194,6 +194,8 @@
   "scan.scanning_form": "Etikett wird gelesen — Felder werden automatisch ausgefüllt...",
   "scan.wait_scanning": "Etikett scannen...",
   "scan.offline": "Scan nicht verfügbar — manuell ausfüllen",
+  "scan.take_photo": "Foto aufnehmen",
+  "scan.choose_photo": "Fotomediathek",
 
   "guest.join_title": "Verkostung beitreten",
   "guest.enter_name": "Gib deinen Namen ein",

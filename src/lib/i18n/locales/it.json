@@ -194,6 +194,8 @@
   "scan.scanning_form": "Lettura dell'etichetta — i campi si compileranno automaticamente...",
   "scan.wait_scanning": "Scansione etichetta...",
   "scan.offline": "Scansione non disponibile — compila manualmente",
+  "scan.take_photo": "Scatta foto",
+  "scan.choose_photo": "Libreria foto",
 
   "guest.join_title": "Partecipa a Degustazione",
   "guest.enter_name": "Inserisci il tuo nome",
