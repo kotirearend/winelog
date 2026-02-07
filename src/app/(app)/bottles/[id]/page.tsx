@@ -22,6 +22,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
+import { ChipSelect } from "@/components/ui/chip-select";
+import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -60,6 +62,7 @@ interface DrinkLog {
   context?: string;
   venue?: string;
   rating?: number;
+  tastingNotes?: Record<string, string>;
   notes?: string;
 }
 
@@ -73,6 +76,9 @@ export default function BottleDetailPage() {
   const router = useRouter();
   const params = useParams();
   const bottleId = params.id as string;
+  const { beverageType, scoringMode } = useAuth();
+  const isBeer = beverageType === "beer";
+  const isCasual = scoringMode === "casual";
 
   const [bottle, setBottle] = useState<Bottle | null>(null);
   const [drinkLogs, setDrinkLogs] = useState<DrinkLog[]>([]);
@@ -99,6 +105,7 @@ export default function BottleDetailPage() {
   const [drinkContext, setDrinkContext] = useState("");
   const [drinkRating, setDrinkRating] = useState("");
   const [drinkNotes, setDrinkNotes] = useState("");
+  const [drinkTastingNotes, setDrinkTastingNotes] = useState<Record<string, string>>({});
   const [isSavingDrink, setIsSavingDrink] = useState(false);
 
   const fetchBottle = useCallback(async () => {
@@ -197,12 +204,14 @@ export default function BottleDetailPage() {
       if (drinkContext.trim()) data.context = drinkContext.trim();
       if (drinkRating) data.rating = parseInt(drinkRating);
       if (drinkNotes.trim()) data.notes = drinkNotes.trim();
+      if (Object.keys(drinkTastingNotes).length > 0) data.tastingNotes = drinkTastingNotes;
 
       await api.post(`/bottles/${bottleId}/drinks`, data);
       setDrinkVenue("");
       setDrinkContext("");
       setDrinkRating("");
       setDrinkNotes("");
+      setDrinkTastingNotes({});
       setShowDrinkForm(false);
       fetchDrinkLogs();
 
@@ -490,6 +499,118 @@ export default function BottleDetailPage() {
                   <Input label="Venue" placeholder="Where did you drink this?" value={drinkVenue} onChange={(e) => setDrinkVenue(e.target.value)} />
                   <Input label="Context" placeholder="e.g., Dinner with friends" value={drinkContext} onChange={(e) => setDrinkContext(e.target.value)} />
                   <Input label="Rating (0-100)" type="number" placeholder="e.g., 85" value={drinkRating} onChange={(e) => setDrinkRating(e.target.value)} min="0" max="100" />
+
+                  {/* Quick Tasting Notes */}
+                  <div className="space-y-4 border-t border-[#E5E1DB] pt-4">
+                    <p className="text-sm font-semibold text-[#1A1A1A]">Quick Tasting Notes</p>
+
+                    {isCasual ? (
+                      <>
+                        <div>
+                          <label className="text-xs font-medium text-[#6B7280] block mb-2">Taste</label>
+                          <ChipSelect
+                            options={["rank", "meh", "decent", "banging", "unreal"]}
+                            value={drinkTastingNotes.casualTaste}
+                            onChange={(v) => setDrinkTastingNotes((prev) => ({ ...prev, casualTaste: v }))}
+                            accentColor="#22C55E"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-[#6B7280] block mb-2">Drinkability</label>
+                          <ChipSelect
+                            options={["one and done", "couple more", "session material", "dangerously moreish"]}
+                            value={drinkTastingNotes.casualDrinkability}
+                            onChange={(v) => setDrinkTastingNotes((prev) => ({ ...prev, casualDrinkability: v }))}
+                            accentColor="#22C55E"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-[#6B7280] block mb-2">Buy Again?</label>
+                          <ChipSelect
+                            options={["no chance", "maybe", "yeah definitely", "buying a case"]}
+                            value={drinkTastingNotes.casualBuyAgain}
+                            onChange={(v) => setDrinkTastingNotes((prev) => ({ ...prev, casualBuyAgain: v }))}
+                            accentColor="#22C55E"
+                          />
+                        </div>
+                      </>
+                    ) : isBeer ? (
+                      <>
+                        <div>
+                          <label className="text-xs font-medium text-[#6B7280] block mb-2">Bitterness</label>
+                          <ChipSelect
+                            options={["low", "moderate", "assertive", "aggressive"]}
+                            value={drinkTastingNotes.bitterness}
+                            onChange={(v) => setDrinkTastingNotes((prev) => ({ ...prev, bitterness: v }))}
+                            accentColor="#B45309"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-[#6B7280] block mb-2">Body</label>
+                          <ChipSelect
+                            options={["light", "medium-light", "medium", "medium-full", "full"]}
+                            value={drinkTastingNotes.beerBody}
+                            onChange={(v) => setDrinkTastingNotes((prev) => ({ ...prev, beerBody: v }))}
+                            accentColor="#B45309"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-[#6B7280] block mb-2">Carbonation</label>
+                          <ChipSelect
+                            options={["flat", "low", "moderate", "high", "effervescent"]}
+                            value={drinkTastingNotes.carbonation}
+                            onChange={(v) => setDrinkTastingNotes((prev) => ({ ...prev, carbonation: v }))}
+                            accentColor="#B45309"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-[#6B7280] block mb-2">Quality</label>
+                          <ChipSelect
+                            options={["poor", "average", "good", "very good", "outstanding"]}
+                            value={drinkTastingNotes.qualityLevel}
+                            onChange={(v) => setDrinkTastingNotes((prev) => ({ ...prev, qualityLevel: v }))}
+                            accentColor="#B45309"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="text-xs font-medium text-[#6B7280] block mb-2">Nose Intensity</label>
+                          <ChipSelect
+                            options={["light", "medium-", "medium", "medium+", "pronounced"]}
+                            value={drinkTastingNotes.intensityNose}
+                            onChange={(v) => setDrinkTastingNotes((prev) => ({ ...prev, intensityNose: v }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-[#6B7280] block mb-2">Sweetness</label>
+                          <ChipSelect
+                            options={["dry", "off-dry", "medium", "sweet"]}
+                            value={drinkTastingNotes.sweetness}
+                            onChange={(v) => setDrinkTastingNotes((prev) => ({ ...prev, sweetness: v }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-[#6B7280] block mb-2">Body</label>
+                          <ChipSelect
+                            options={["light", "medium-", "medium", "medium+", "full"]}
+                            value={drinkTastingNotes.body}
+                            onChange={(v) => setDrinkTastingNotes((prev) => ({ ...prev, body: v }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-[#6B7280] block mb-2">Quality</label>
+                          <ChipSelect
+                            options={["poor", "acceptable", "good", "very good", "outstanding"]}
+                            value={drinkTastingNotes.qualityLevel}
+                            onChange={(v) => setDrinkTastingNotes((prev) => ({ ...prev, qualityLevel: v }))}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-semibold text-[#1A1A1A]">Notes</label>
                     <textarea
@@ -502,7 +623,7 @@ export default function BottleDetailPage() {
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
-                      onClick={() => { setShowDrinkForm(false); setDrinkVenue(""); setDrinkContext(""); setDrinkRating(""); setDrinkNotes(""); }}
+                      onClick={() => { setShowDrinkForm(false); setDrinkVenue(""); setDrinkContext(""); setDrinkRating(""); setDrinkNotes(""); setDrinkTastingNotes({}); }}
                       className="flex-1 rounded-xl"
                     >
                       Cancel
@@ -546,6 +667,15 @@ export default function BottleDetailPage() {
                         </div>
                         {log.venue && <p className="text-sm font-medium text-[#1A1A1A] truncate">{log.venue}</p>}
                         {log.context && <p className="text-xs text-[#6B7280]">{log.context}</p>}
+                        {log.tastingNotes && Object.keys(log.tastingNotes).length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {Object.entries(log.tastingNotes).map(([key, val]) => (
+                              <span key={key} className="text-xs px-2 py-0.5 rounded-full bg-[#F5F1EB] text-[#6B7280] font-medium">
+                                {val}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         {log.notes && <p className="text-xs text-[#6B7280] mt-1 line-clamp-2">{log.notes}</p>}
                       </div>
                     </div>
