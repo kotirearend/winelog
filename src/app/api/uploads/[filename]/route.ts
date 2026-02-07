@@ -1,17 +1,8 @@
 import { NextResponse } from 'next/server';
-import { readFile, stat } from 'fs/promises';
-import path from 'path';
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
-
-const MIME_TYPES: Record<string, string> = {
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  png: 'image/png',
-  gif: 'image/gif',
-  webp: 'image/webp',
-  heic: 'image/heic',
-};
+const SPACES_BUCKET = process.env.SPACES_BUCKET || 'winelogv1';
+const SPACES_REGION = process.env.SPACES_REGION || 'lon1';
+const SPACES_CDN_URL = process.env.SPACES_CDN_URL || `https://${SPACES_BUCKET}.${SPACES_REGION}.digitaloceanspaces.com`;
 
 export async function GET(
   _request: Request,
@@ -19,32 +10,9 @@ export async function GET(
 ) {
   try {
     const { filename } = await params;
-
-    // Sanitize filename to prevent directory traversal
-    const sanitized = path.basename(filename);
-    const filepath = path.join(UPLOAD_DIR, sanitized);
-
-    // Check file exists
-    try {
-      await stat(filepath);
-    } catch {
-      return NextResponse.json(
-        { error: 'File not found' },
-        { status: 404 }
-      );
-    }
-
-    // Read and serve the file
-    const fileBuffer = await readFile(filepath);
-    const ext = sanitized.split('.').pop()?.toLowerCase() || 'jpg';
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-
-    return new NextResponse(fileBuffer, {
-      headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=31536000, immutable',
-      },
-    });
+    // Redirect to DO Spaces URL for any legacy /api/uploads/filename requests
+    const spacesUrl = `${SPACES_CDN_URL}/uploads/${filename}`;
+    return NextResponse.redirect(spacesUrl, 301);
   } catch (error) {
     console.error('Serve file error:', error);
     return NextResponse.json(

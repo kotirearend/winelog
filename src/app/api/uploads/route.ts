@@ -1,10 +1,22 @@
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getAuthUser } from '@/lib/auth';
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
+const SPACES_BUCKET = process.env.SPACES_BUCKET || 'winelogv1';
+const SPACES_REGION = process.env.SPACES_REGION || 'lon1';
+const SPACES_ENDPOINT = `https://${SPACES_REGION}.digitaloceanspaces.com`;
+const SPACES_CDN_URL = process.env.SPACES_CDN_URL || `https://${SPACES_BUCKET}.${SPACES_REGION}.digitaloceanspaces.com`;
+
+const s3 = new S3Client({
+  endpoint: SPACES_ENDPOINT,
+  region: SPACES_REGION,
+  credentials: {
+    accessKeyId: process.env.SPACES_KEY || '',
+    secretAccessKey: process.env.SPACES_SECRET || '',
+  },
+  forcePathStyle: false,
+});
 
 export async function POST(request: Request) {
   try {
@@ -36,20 +48,25 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create upload directory if it doesn't exist
-    await mkdir(UPLOAD_DIR, { recursive: true });
-
     // Generate unique filename
     const ext = file.name.split('.').pop() || 'jpg';
     const filename = `${randomUUID()}.${ext}`;
-    const filepath = path.join(UPLOAD_DIR, filename);
+    const key = `uploads/${filename}`;
 
-    // Write file to disk
+    // Upload to DO Spaces
     const bytes = await file.arrayBuffer();
-    await writeFile(filepath, Buffer.from(bytes));
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: SPACES_BUCKET,
+        Key: key,
+        Body: Buffer.from(bytes),
+        ContentType: file.type,
+        ACL: 'public-read',
+      })
+    );
 
-    // Return the URL to access this file
-    const photoUrl = `/api/uploads/${filename}`;
+    // Return the public Spaces URL directly
+    const photoUrl = `${SPACES_CDN_URL}/${key}`;
 
     return NextResponse.json({ photoUrl, filename });
   } catch (error) {
