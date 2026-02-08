@@ -13,6 +13,7 @@ import {
   ThumbsDown,
 } from "lucide-react";
 import { guestApi } from "@/lib/guest-api-client";
+import { useTranslation } from "@/lib/i18n-context";
 
 interface HostEntry {
   id: string;
@@ -49,18 +50,20 @@ function getScoreColor(score: number): string {
   return "#9CA3AF";
 }
 
-function getScoreLabel(score: number): string {
-  if (score >= 90) return "Elite";
-  if (score >= 75) return "Proper Good";
-  if (score >= 60) return "Solid";
-  if (score >= 40) return "It's Alright";
-  return "Nah";
+// Score label keys mapped to score ranges
+function getScoreLabelKey(score: number): string {
+  if (score >= 90) return "quality.elite";
+  if (score >= 75) return "quality.proper_good";
+  if (score >= 60) return "quality.solid";
+  if (score >= 40) return "quality.alright";
+  return "quality.nah";
 }
 
 export default function GuestResultsPage() {
   const router = useRouter();
   const params = useParams();
   const sessionCode = (params.sessionCode as string).toUpperCase();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [sessionName, setSessionName] = useState("");
@@ -117,7 +120,7 @@ export default function GuestResultsPage() {
 
   // Build comparison data
   const wineResults = hostEntries.map((entry) => {
-    const wineName = entry.adHocName || entry.bottleName || "Wine";
+    const wineName = entry.adHocName || entry.bottleName || t("guest.untitled_wine");
     const photoUrl = entry.adHocPhotoUrl || entry.bottlePhotoUrl || entry.entryPhotoUrl;
 
     // Get all scores for this wine (guest entries where parentEntryId matches)
@@ -125,7 +128,7 @@ export default function GuestResultsPage() {
       .filter((e) => e.parentEntryId === entry.id && e.guestId !== null)
       .map((e) => ({
         guestId: e.guestId,
-        guestName: e.guestName || "Unknown",
+        guestName: e.guestName || t("guest.unknown_guest"),
         totalScore: e.totalScore || 0,
         notesShort: e.notesShort,
       }));
@@ -137,7 +140,7 @@ export default function GuestResultsPage() {
 
     const allScores = [
       ...(hostEntry && hostEntry.totalScore
-        ? [{ guestId: "host", guestName: "Host", totalScore: hostEntry.totalScore, notesShort: hostEntry.notesShort }]
+        ? [{ guestId: "host", guestName: t("guest.host"), totalScore: hostEntry.totalScore, notesShort: hostEntry.notesShort }]
         : []),
       ...wineScores,
     ];
@@ -166,7 +169,7 @@ export default function GuestResultsPage() {
   allGuestScores.forEach((e) => {
     if (!e.guestId) return;
     if (!guestScoreTotals[e.guestId]) {
-      guestScoreTotals[e.guestId] = { name: e.guestName || "Unknown", total: 0, count: 0 };
+      guestScoreTotals[e.guestId] = { name: e.guestName || t("guest.unknown_guest"), total: 0, count: 0 };
     }
     guestScoreTotals[e.guestId].total += e.totalScore || 0;
     guestScoreTotals[e.guestId].count += 1;
@@ -193,7 +196,7 @@ export default function GuestResultsPage() {
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#D4A847]/20 mb-3">
           <Trophy className="w-7 h-7 text-[#D4A847]" />
         </div>
-        <h2 className="text-xl font-bold text-[#1A1A1A]">Tasting Results</h2>
+        <h2 className="text-xl font-bold text-[#1A1A1A]">{t("guest.tasting_results")}</h2>
         <p className="text-[#8B7355] text-sm">{sessionName}</p>
       </div>
 
@@ -202,7 +205,7 @@ export default function GuestResultsPage() {
         {topWine && topWine.avgScore > 0 && (
           <div className="bg-white rounded-xl border border-[#E5E1DB] p-3 text-center">
             <Crown className="w-5 h-5 text-[#D4A847] mx-auto mb-1" />
-            <p className="text-xs text-[#8B7355]">Top Wine</p>
+            <p className="text-xs text-[#8B7355]">{t("guest.top_wine")}</p>
             <p className="text-sm font-bold text-[#1A1A1A] truncate">{topWine.wineName}</p>
             <p className="text-lg font-bold" style={{ color: getScoreColor(topWine.avgScore) }}>
               {topWine.avgScore}
@@ -212,7 +215,7 @@ export default function GuestResultsPage() {
         {mostGenerous && mostGenerous.avg > 0 && (
           <div className="bg-white rounded-xl border border-[#E5E1DB] p-3 text-center">
             <Star className="w-5 h-5 text-[#22C55E] mx-auto mb-1" />
-            <p className="text-xs text-[#8B7355]">Most Generous</p>
+            <p className="text-xs text-[#8B7355]">{t("guest.most_generous")}</p>
             <p className="text-sm font-bold text-[#1A1A1A] truncate">{mostGenerous.name}</p>
             <p className="text-lg font-bold text-[#22C55E]">avg {mostGenerous.avg}</p>
           </div>
@@ -220,14 +223,14 @@ export default function GuestResultsPage() {
         {harshestCritic && guestAverages.length > 1 && (
           <div className="bg-white rounded-xl border border-[#E5E1DB] p-3 text-center">
             <ThumbsDown className="w-5 h-5 text-[#EF4444] mx-auto mb-1" />
-            <p className="text-xs text-[#8B7355]">Harshest Critic</p>
+            <p className="text-xs text-[#8B7355]">{t("guest.harshest_critic")}</p>
             <p className="text-sm font-bold text-[#1A1A1A] truncate">{harshestCritic.name}</p>
             <p className="text-lg font-bold text-[#EF4444]">avg {harshestCritic.avg}</p>
           </div>
         )}
         <div className="bg-white rounded-xl border border-[#E5E1DB] p-3 text-center">
           <Users className="w-5 h-5 text-[#7C2D36] mx-auto mb-1" />
-          <p className="text-xs text-[#8B7355]">Tasters</p>
+          <p className="text-xs text-[#8B7355]">{t("guest.tasters")}</p>
           <p className="text-2xl font-bold text-[#7C2D36]">{guests.length}</p>
         </div>
       </div>
@@ -289,7 +292,7 @@ export default function GuestResultsPage() {
                     <span className="text-sm text-[#1A1A1A]">
                       {score.guestName}
                       {score.guestId === myGuestId && (
-                        <span className="text-xs text-[#7C2D36] ml-1">(you)</span>
+                        <span className="text-xs text-[#7C2D36] ml-1">({t("guest.you")})</span>
                       )}
                     </span>
                   </div>
@@ -307,14 +310,14 @@ export default function GuestResultsPage() {
                         color: getScoreColor(score.totalScore),
                       }}
                     >
-                      {getScoreLabel(score.totalScore)}
+                      {t(getScoreLabelKey(score.totalScore))}
                     </span>
                   </div>
                 </div>
               ))}
               {wine.allScores.length === 0 && (
                 <div className="px-4 py-3 text-sm text-[#8B7355] text-center">
-                  No scores yet
+                  {t("guest.no_scores_yet")}
                 </div>
               )}
             </div>
@@ -329,7 +332,7 @@ export default function GuestResultsPage() {
           className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-[#E5E1DB] text-[#1A1A1A] font-medium"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Scoring
+          {t("guest.back_to_scoring")}
         </button>
       </div>
     </div>

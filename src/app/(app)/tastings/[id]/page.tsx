@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Loading } from "@/components/ui/loading";
 import { FredCelebration } from "@/components/ui/fred-celebration";
 import { useAuth } from "@/lib/auth-context";
+import { useTranslation } from "@/lib/i18n-context";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -139,25 +140,25 @@ interface ExpandedEntryState {
   notesLong: string;
 }
 
-function getQualityLabel(qualityLevel?: string): string {
-  const labels: Record<string, string> = {
-    faulty: "Faulty",
-    poor: "Poor",
-    acceptable: "Acceptable",
-    good: "Good",
-    "very good": "Very Good",
-    outstanding: "Outstanding",
-    // Beer-specific
-    problematic: "Problematic",
-    average: "Average",
-    // Casual-specific
-    nah: "Nah",
-    "it's alright": "It's Alright",
-    solid: "Solid",
-    "proper good": "Proper Good",
-    elite: "Elite",
-  };
-  return labels[qualityLevel || ""] || "Not Rated";
+// Quality label translation key mapping
+const QUALITY_LABEL_KEYS: Record<string, string> = {
+  faulty: "quality.faulty",
+  poor: "quality.poor",
+  acceptable: "quality.acceptable",
+  good: "quality.good",
+  "very good": "quality.very_good",
+  outstanding: "quality.outstanding",
+  problematic: "quality.problematic",
+  average: "quality.average",
+  nah: "quality.nah",
+  "it's alright": "quality.alright",
+  solid: "quality.solid",
+  "proper good": "quality.proper_good",
+  elite: "quality.elite",
+};
+
+function getQualityLabelKey(qualityLevel?: string): string {
+  return QUALITY_LABEL_KEYS[qualityLevel || ""] || "quality.not_rated";
 }
 
 function getQualityColor(qualityLevel?: string): string {
@@ -223,6 +224,7 @@ export default function TastingDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const { beverageType, scoringMode } = useAuth();
+  const { t } = useTranslation();
   const isBeer = beverageType === "beer";
   const isCasual = scoringMode === "casual";
 
@@ -484,6 +486,51 @@ export default function TastingDetailPage() {
       console.error("Failed to download export:", err);
       setError(`Failed to download ${format.toUpperCase()}. Please try again.`);
     }
+  };
+
+  const downloadComparisonCSV = () => {
+    if (socialComparison.length === 0 || socialGuests.length === 0) return;
+    const headers = [
+      isBeer ? "Beer" : "Wine",
+      "Producer",
+      "Vintage",
+      "Host Score",
+      ...socialGuests.map((g) => g.guestName),
+      "Average",
+    ];
+    const rows = socialComparison.map((wine) => {
+      const allScores = [
+        wine.hostScore,
+        ...wine.guestScores.map((g) => g.totalScore),
+      ].filter((s): s is number => s !== null && s !== undefined);
+      const avg = allScores.length > 0
+        ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length)
+        : "";
+      return [
+        wine.wineName,
+        wine.producer || "",
+        wine.vintage || "",
+        wine.hostScore ?? "",
+        ...socialGuests.map((guest) => {
+          const gs = wine.guestScores.find((g) => g.guestId === guest.id);
+          return gs?.totalScore ?? "";
+        }),
+        avg,
+      ];
+    });
+    const csvContent = [
+      headers.map((h) => `"${String(h).replace(/"/g, '""')}"`).join(","),
+      ...rows.map((row) =>
+        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+      ),
+    ].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tasting-comparison-${id}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleToggleSocialMode = async () => {
@@ -800,7 +847,7 @@ export default function TastingDetailPage() {
                             {qualityLevel && (
                               <div className="mt-2 flex gap-2 items-center">
                                 <Badge variant="score" className={getQualityColor(qualityLevel)}>
-                                  {getQualityLabel(qualityLevel)}
+                                  {t(getQualityLabelKey(qualityLevel))}
                                 </Badge>
                               </div>
                             )}
@@ -1850,7 +1897,7 @@ export default function TastingDetailPage() {
                             <td className="p-3 text-center">
                               {qualityLevel ? (
                                 <Badge variant="score" className={getQualityColor(qualityLevel)}>
-                                  {getQualityLabel(qualityLevel)}
+                                  {t(getQualityLabelKey(qualityLevel))}
                                 </Badge>
                               ) : (
                                 <span className="text-[#6B7280]">-</span>
@@ -2007,15 +2054,26 @@ export default function TastingDetailPage() {
                   </div>
                 )}
 
-                {/* Refresh button */}
-                <Button
-                  variant="outline"
-                  onClick={fetchSocialResults}
-                  disabled={loadingSocialResults}
-                  className="w-full"
-                >
-                  Refresh Results
-                </Button>
+                {/* Actions */}
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={fetchSocialResults}
+                    disabled={loadingSocialResults}
+                    className="flex-1"
+                  >
+                    Refresh Results
+                  </Button>
+                  {socialComparison.length > 0 && socialGuests.length > 0 && (
+                    <Button
+                      variant="outline"
+                      onClick={downloadComparisonCSV}
+                      className="flex-1 flex items-center justify-center gap-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      CSV
+                    </Button>
+                  )}</div>
               </>
             )}
           </div>

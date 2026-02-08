@@ -14,24 +14,46 @@ import {
 } from "lucide-react";
 import { guestApi } from "@/lib/guest-api-client";
 import { ChipSelect } from "@/components/ui/chip-select";
+import { useTranslation } from "@/lib/i18n-context";
 
-// Casual scoring categories
-const CASUAL_CATEGORIES = [
-  { key: "casualLooks", label: "Looks" },
-  { key: "casualSmell", label: "Smell" },
-  { key: "casualTaste", label: "Taste" },
-  { key: "casualDrinkability", label: "Drinkability" },
-  { key: "casualValue", label: "Value" },
-  { key: "casualBuyAgain", label: "Buy Again?" },
-];
+// Casual scoring category keys
+const CASUAL_CATEGORY_KEYS = [
+  "casualLooks",
+  "casualSmell",
+  "casualTaste",
+  "casualDrinkability",
+  "casualValue",
+  "casualBuyAgain",
+] as const;
 
-const CASUAL_OPTIONS: Record<string, string[]> = {
+// English option values (stored in DB) — these never change
+const CASUAL_OPTION_VALUES: Record<string, string[]> = {
   casualLooks: ["Rough", "Alright", "Pretty", "Proper Fit", "Gorgeous"],
   casualSmell: ["Rank", "Meh", "Nice", "Lovely", "Unreal"],
   casualTaste: ["Grim", "OK", "Tasty", "Banging", "Life-Changing"],
   casualDrinkability: ["One Sip", "Few Glasses", "Easy Drinking", "Sessionable", "Dangerous"],
   casualValue: ["Rip Off", "Fair Enough", "Good Deal", "Bargain", "Steal"],
   casualBuyAgain: ["Never", "Maybe", "Probably", "Deffo", "Buying a Case"],
+};
+
+// Translation key mapping for option values
+const CASUAL_OPTION_KEYS: Record<string, string[]> = {
+  casualLooks: ["casual.looks_1", "casual.looks_2", "casual.looks_3", "casual.looks_4", "casual.looks_5"],
+  casualSmell: ["casual.smell_1", "casual.smell_2", "casual.smell_3", "casual.smell_4", "casual.smell_5"],
+  casualTaste: ["casual.taste_1", "casual.taste_2", "casual.taste_3", "casual.taste_4", "casual.taste_5"],
+  casualDrinkability: ["casual.drink_1", "casual.drink_2", "casual.drink_3", "casual.drink_4", "casual.drink_5"],
+  casualValue: ["casual.value_1", "casual.value_2", "casual.value_3", "casual.value_4", "casual.value_5"],
+  casualBuyAgain: ["casual.again_1", "casual.again_2", "casual.again_3", "casual.again_4", "casual.again_5"],
+};
+
+// Category label translation keys
+const CASUAL_CATEGORY_LABEL_KEYS: Record<string, string> = {
+  casualLooks: "casual.looks",
+  casualSmell: "casual.smell",
+  casualTaste: "casual.taste",
+  casualDrinkability: "casual.drinkability",
+  casualValue: "casual.value",
+  casualBuyAgain: "casual.buy_again",
 };
 
 // Score mapping for casual mode
@@ -68,6 +90,7 @@ export default function GuestTastingPage() {
   const router = useRouter();
   const params = useParams();
   const sessionCode = (params.sessionCode as string).toUpperCase();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [sessionName, setSessionName] = useState("");
@@ -134,13 +157,23 @@ export default function GuestTastingPage() {
 
   const calculateTotalScore = (entryScores: Record<string, string>): number => {
     let total = 0;
-    CASUAL_CATEGORIES.forEach(({ key }) => {
+    CASUAL_CATEGORY_KEYS.forEach((key) => {
       const val = entryScores[key];
       if (val && CASUAL_SCORE_MAP[val]) {
         total += CASUAL_SCORE_MAP[val];
       }
     });
     return Math.min(100, total);
+  };
+
+  // Build translated chip options for a category
+  const getTranslatedOptions = (categoryKey: string) => {
+    const values = CASUAL_OPTION_VALUES[categoryKey];
+    const keys = CASUAL_OPTION_KEYS[categoryKey];
+    return values.map((val, i) => ({
+      value: val,
+      label: t(keys[i]),
+    }));
   };
 
   const handleSubmitAll = async () => {
@@ -155,7 +188,7 @@ export default function GuestTastingPage() {
       });
 
       if (entriesToSubmit.length === 0) {
-        setError("Score at least one wine before submitting!");
+        setError(t("guest.score_at_least_one"));
         setSubmitting(false);
         return;
       }
@@ -199,10 +232,10 @@ export default function GuestTastingPage() {
           <Check className="w-8 h-8 text-green-600" />
         </div>
         <h2 className="text-2xl font-bold text-[#1A1A1A] mb-2">
-          Scores Submitted!
+          {t("guest.scores_submitted")}
         </h2>
         <p className="text-[#8B7355] mb-6">
-          Nice one. Your tasting notes are in.
+          {t("guest.scores_submitted_desc")}
         </p>
         <button
           onClick={() => router.push(`/taste/${sessionCode}/results`)}
@@ -210,7 +243,7 @@ export default function GuestTastingPage() {
           style={{ backgroundColor: "#7C2D36" }}
         >
           <Eye className="w-5 h-5" />
-          View Results
+          {t("guest.view_results")}
         </button>
       </div>
     );
@@ -226,7 +259,7 @@ export default function GuestTastingPage() {
       <div className="text-center mb-6">
         <h2 className="text-xl font-bold text-[#1A1A1A]">{sessionName}</h2>
         <p className="text-[#8B7355] text-sm mt-1">
-          Score each wine below — tap to expand
+          {t("guest.score_instruction")}
         </p>
       </div>
 
@@ -239,7 +272,7 @@ export default function GuestTastingPage() {
       {/* Wine entries */}
       <div className="space-y-3">
         {hostEntries.map((entry, idx) => {
-          const wineName = entry.adHocName || entry.bottleName || "Wine";
+          const wineName = entry.adHocName || entry.bottleName || t("guest.untitled_wine");
           const photoUrl = entry.adHocPhotoUrl || entry.bottlePhotoUrl || entry.entryPhotoUrl;
           const isExpanded = expandedEntry === entry.id;
           const entryScores = scores[entry.id] || {};
@@ -307,13 +340,13 @@ export default function GuestTastingPage() {
               {/* Expanded scoring panel */}
               {isExpanded && (
                 <div className="border-t border-[#E5E1DB] p-4 space-y-5">
-                  {CASUAL_CATEGORIES.map(({ key, label }) => (
+                  {CASUAL_CATEGORY_KEYS.map((key) => (
                     <div key={key}>
                       <label className="block text-sm font-medium text-[#22C55E] mb-2">
-                        {label}
+                        {t(CASUAL_CATEGORY_LABEL_KEYS[key])}
                       </label>
                       <ChipSelect
-                        options={CASUAL_OPTIONS[key]}
+                        options={getTranslatedOptions(key)}
                         value={entryScores[key]}
                         onChange={(val) =>
                           setScores((prev) => ({
@@ -332,7 +365,7 @@ export default function GuestTastingPage() {
                   {/* Quick notes */}
                   <div>
                     <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
-                      Quick Notes
+                      {t("guest.quick_notes")}
                     </label>
                     <textarea
                       value={notes[entry.id] || ""}
@@ -342,7 +375,7 @@ export default function GuestTastingPage() {
                           [entry.id]: e.target.value,
                         }))
                       }
-                      placeholder="Any thoughts..."
+                      placeholder={t("guest.any_thoughts")}
                       maxLength={500}
                       rows={2}
                       className="w-full px-3 py-2 rounded-xl border border-[#E5E1DB] bg-[#FDFBF7] text-[#1A1A1A] placeholder:text-[#8B7355]/50 focus:outline-none focus:ring-2 focus:ring-[#22C55E]/30 text-sm resize-none"
@@ -381,8 +414,8 @@ export default function GuestTastingPage() {
           )}
           <span>
             {submitting
-              ? "Submitting..."
-              : `Submit All Scores (${scoredCount}/${hostEntries.length})`}
+              ? t("guest.submitting")
+              : t("guest.submit_all_scores", { scored: scoredCount, total: hostEntries.length })}
           </span>
         </button>
       </div>
