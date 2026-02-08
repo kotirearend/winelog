@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Wine, Beer, MapPin, Grape, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Wine, Beer, MapPin, Grape, X, ChevronDown, ChevronUp, Grid3X3, List } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { SearchInput } from "@/components/ui/search-input";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ interface Bottle {
   photoUrl?: string;
   quantity: number;
   locationId?: string;
+  subLocationText?: string;
   priceAmount?: string;
   priceCurrency?: string;
 }
@@ -49,7 +50,9 @@ export default function BottlesPage() {
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedGrape, setSelectedGrape] = useState<string | null>(null);
+  const [selectedShelf, setSelectedShelf] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "compact">("grid");
 
   const fetchLocations = useCallback(async () => {
     try {
@@ -100,6 +103,13 @@ export default function BottlesPage() {
         );
       }
 
+      // Filter by shelf/sub-location
+      if (selectedShelf) {
+        filtered = filtered.filter((b: Bottle) =>
+          b.subLocationText?.toLowerCase() === selectedShelf.toLowerCase()
+        );
+      }
+
       setBottles(filtered);
       setError(null);
     } catch (err) {
@@ -109,7 +119,7 @@ export default function BottlesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [search, selectedLocationId, statusFilter, beverageType, selectedRegion, selectedGrape]);
+  }, [search, selectedLocationId, statusFilter, beverageType, selectedRegion, selectedGrape, selectedShelf]);
 
   useEffect(() => {
     fetchLocations();
@@ -148,7 +158,19 @@ export default function BottlesPage() {
       .map(([name, count]) => ({ name, count }));
   }, [allBottlesRaw]);
 
-  const activeFilterCount = [selectedLocationId, selectedRegion, selectedGrape].filter(Boolean).length;
+  const availableShelves = useMemo(() => {
+    const shelfSet = new Map<string, number>();
+    allBottlesRaw.forEach((b) => {
+      if (b.subLocationText) {
+        shelfSet.set(b.subLocationText, (shelfSet.get(b.subLocationText) || 0) + 1);
+      }
+    });
+    return Array.from(shelfSet.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => ({ name, count }));
+  }, [allBottlesRaw]);
+
+  const activeFilterCount = [selectedLocationId, selectedRegion, selectedGrape, selectedShelf].filter(Boolean).length;
 
   const handleAddButton = () => {
     router.push("/bottles/new");
@@ -162,6 +184,7 @@ export default function BottlesPage() {
     setSelectedLocationId(null);
     setSelectedRegion(null);
     setSelectedGrape(null);
+    setSelectedShelf(null);
   };
 
   const formatDate = (dateString: string): string => {
@@ -277,6 +300,14 @@ export default function BottlesPage() {
                     </button>
                   </span>
                 )}
+                {selectedShelf && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#D4A847]/10 text-[#D4A847] text-xs font-medium">
+                    {selectedShelf}
+                    <button onClick={() => setSelectedShelf(null)}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
                 <button
                   onClick={clearAllFilters}
                   className="text-xs text-[#6B7280] underline"
@@ -371,6 +402,31 @@ export default function BottlesPage() {
                 </div>
               </div>
             )}
+
+            {/* Shelf / Sub-location */}
+            {availableShelves.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-2">
+                  {t("bottles.shelf")}
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  {availableShelves.map(({ name, count }) => (
+                    <button
+                      key={name}
+                      onClick={() => setSelectedShelf(selectedShelf === name ? null : name)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                        selectedShelf === name
+                          ? "bg-[#D4A847] text-white"
+                          : "bg-[#F5F1EB] text-[#6B7280] hover:bg-[#E5E1DB]"
+                      )}
+                    >
+                      {name} <span className="opacity-60">({count})</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -380,12 +436,40 @@ export default function BottlesPage() {
           </div>
         )}
 
-        {/* Results count */}
+        {/* Results count + view toggle */}
         {!isLoading && bottles.length > 0 && (
-          <p className="text-xs text-[#8B7355] font-medium">
-            {bottles.length} {isBeer ? "beer" : "bottle"}{bottles.length !== 1 ? "s" : ""}
-            {activeFilterCount > 0 ? " matching filters" : ""}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-[#8B7355] font-medium">
+              {bottles.length} {isBeer ? "beer" : "bottle"}{bottles.length !== 1 ? "s" : ""}
+              {activeFilterCount > 0 ? " matching filters" : ""}
+            </p>
+            <div className="flex items-center gap-1 bg-[#F5F1EB] rounded-lg p-0.5">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={cn(
+                  "p-1.5 rounded-md transition-all",
+                  viewMode === "grid"
+                    ? "bg-white text-[#7C2D36] shadow-sm"
+                    : "text-[#6B7280] hover:text-[#1A1A1A]"
+                )}
+                title={t("bottles.grid_view")}
+              >
+                <Grid3X3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("compact")}
+                className={cn(
+                  "p-1.5 rounded-md transition-all",
+                  viewMode === "compact"
+                    ? "bg-white text-[#7C2D36] shadow-sm"
+                    : "text-[#6B7280] hover:text-[#1A1A1A]"
+                )}
+                title={t("bottles.compact_view")}
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         )}
 
         {bottles.length === 0 && !isLoading ? (
@@ -402,86 +486,138 @@ export default function BottlesPage() {
             }}
           />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {bottles.map((bottle) => (
-              <div
-                key={bottle.id}
-                onClick={() => handleBottleClick(bottle.id)}
-                className="bg-white rounded-2xl border border-[#E5E1DB] overflow-hidden cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
-              >
-                {/* Photo area */}
-                {bottle.photoUrl ? (
-                  <div className="aspect-[3/2] w-full overflow-hidden bg-[#F5F1EB]">
-                    <img
-                      src={bottle.photoUrl}
-                      alt={bottle.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="aspect-[3/2] w-full bg-gradient-to-br from-[#F5F1EB] to-[#E5E1DB] flex items-center justify-center">
-                    {isBeer ? (
-                      <Beer className="w-12 h-12 text-[#B45309]/25" />
+          <>
+            {viewMode === "grid" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {bottles.map((bottle) => (
+                  <div
+                    key={bottle.id}
+                    onClick={() => handleBottleClick(bottle.id)}
+                    className="bg-white rounded-2xl border border-[#E5E1DB] overflow-hidden cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+                  >
+                    {/* Photo area */}
+                    {bottle.photoUrl ? (
+                      <div className="aspect-[3/2] w-full overflow-hidden bg-[#F5F1EB]">
+                        <img
+                          src={bottle.photoUrl}
+                          alt={bottle.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                     ) : (
-                      <Wine className="w-12 h-12 text-[#7C2D36]/25" />
+                      <div className="aspect-[3/2] w-full bg-gradient-to-br from-[#F5F1EB] to-[#E5E1DB] flex items-center justify-center">
+                        {isBeer ? (
+                          <Beer className="w-12 h-12 text-[#B45309]/25" />
+                        ) : (
+                          <Wine className="w-12 h-12 text-[#7C2D36]/25" />
+                        )}
+                      </div>
                     )}
+
+                    {/* Content */}
+                    <div className="p-4">
+                      {bottle.producer && (
+                        <p className="text-[10px] font-bold text-[#7C2D36] uppercase tracking-widest truncate mb-0.5">
+                          {bottle.producer}
+                        </p>
+                      )}
+                      <h3 className="font-bold text-[15px] text-[#1A1A1A] leading-snug line-clamp-2">
+                        {bottle.name}
+                      </h3>
+                      <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                        {bottle.vintage && (
+                          <span className="text-[11px] font-semibold text-[#7C2D36] bg-[#FCE4E8] px-2 py-0.5 rounded-md">
+                            {bottle.vintage}
+                          </span>
+                        )}
+                        {(bottle.country || bottle.region) && (
+                          <span className="text-[11px] text-[#8B7355] truncate">
+                            {[bottle.region, bottle.country].filter(Boolean).join(", ")}
+                          </span>
+                        )}
+                      </div>
+                      {bottle.grapes && bottle.grapes.length > 0 && (
+                        <p className="text-[11px] text-[#9CA3AF] mt-1.5 truncate">
+                          {bottle.grapes.join(" · ")}
+                        </p>
+                      )}
+                      <div className="mt-2.5 flex items-center justify-between">
+                        {bottle.quantity > 1 ? (
+                          <span className="text-[11px] font-bold text-[#7C2D36] bg-[#7C2D36]/10 px-2 py-0.5 rounded-full">
+                            {t("bottles.qty", { count: bottle.quantity })}
+                          </span>
+                        ) : (
+                          <span />
+                        )}
+                        {bottle.priceAmount && (
+                          <span className="text-[11px] font-bold text-[#D4A847]">
+                            {bottle.priceCurrency || "£"}{Number(bottle.priceAmount).toFixed(0)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                )}
-
-                {/* Content */}
-                <div className="p-4">
-                  {/* Producer */}
-                  {bottle.producer && (
-                    <p className="text-[10px] font-bold text-[#7C2D36] uppercase tracking-widest truncate mb-0.5">
-                      {bottle.producer}
-                    </p>
-                  )}
-
-                  {/* Name */}
-                  <h3 className="font-bold text-[15px] text-[#1A1A1A] leading-snug line-clamp-2">
-                    {bottle.name}
-                  </h3>
-
-                  {/* Meta row */}
-                  <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-                    {bottle.vintage && (
-                      <span className="text-[11px] font-semibold text-[#7C2D36] bg-[#FCE4E8] px-2 py-0.5 rounded-md">
-                        {bottle.vintage}
-                      </span>
-                    )}
-                    {(bottle.country || bottle.region) && (
-                      <span className="text-[11px] text-[#8B7355] truncate">
-                        {[bottle.region, bottle.country].filter(Boolean).join(", ")}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Grapes */}
-                  {bottle.grapes && bottle.grapes.length > 0 && (
-                    <p className="text-[11px] text-[#9CA3AF] mt-1.5 truncate">
-                      {bottle.grapes.join(" · ")}
-                    </p>
-                  )}
-
-                  {/* Bottom row: qty + price */}
-                  <div className="mt-2.5 flex items-center justify-between">
-                    {bottle.quantity > 1 ? (
-                      <span className="text-[11px] font-bold text-[#7C2D36] bg-[#7C2D36]/10 px-2 py-0.5 rounded-full">
-                        {t("bottles.qty", { count: bottle.quantity })}
-                      </span>
-                    ) : (
-                      <span />
-                    )}
-                    {bottle.priceAmount && (
-                      <span className="text-[11px] font-bold text-[#D4A847]">
-                        {bottle.priceCurrency || "£"}{Number(bottle.priceAmount).toFixed(0)}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            ) : (
+              /* Compact list view */
+              <div className="space-y-1">
+                {bottles.map((bottle) => (
+                  <div
+                    key={bottle.id}
+                    onClick={() => handleBottleClick(bottle.id)}
+                    className="flex items-center gap-3 bg-white rounded-xl border border-[#E5E1DB] px-3 py-2.5 cursor-pointer hover:shadow-sm active:scale-[0.99] transition-all"
+                  >
+                    {/* Tiny thumbnail or icon */}
+                    {bottle.photoUrl ? (
+                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-[#F5F1EB] flex-shrink-0">
+                        <img src={bottle.photoUrl} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#F5F1EB] to-[#E5E1DB] flex items-center justify-center flex-shrink-0">
+                        {isBeer ? (
+                          <Beer className="w-5 h-5 text-[#B45309]/30" />
+                        ) : (
+                          <Wine className="w-5 h-5 text-[#7C2D36]/30" />
+                        )}
+                      </div>
+                    )}
+
+                    {/* Main info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-semibold text-[#1A1A1A] truncate">
+                          {bottle.name}
+                        </h3>
+                        {bottle.vintage && (
+                          <span className="text-[10px] font-bold text-[#7C2D36] bg-[#FCE4E8] px-1.5 py-0.5 rounded flex-shrink-0">
+                            {bottle.vintage}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-[#6B7280] truncate">
+                        {[bottle.producer, bottle.region || bottle.country].filter(Boolean).join(" · ")}
+                      </p>
+                    </div>
+
+                    {/* Right side: qty + price */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {bottle.quantity > 1 && (
+                        <span className="text-[10px] font-bold text-[#7C2D36] bg-[#7C2D36]/10 px-1.5 py-0.5 rounded-full">
+                          ×{bottle.quantity}
+                        </span>
+                      )}
+                      {bottle.priceAmount && (
+                        <span className="text-[11px] font-bold text-[#D4A847]">
+                          {bottle.priceCurrency || "£"}{Number(bottle.priceAmount).toFixed(0)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

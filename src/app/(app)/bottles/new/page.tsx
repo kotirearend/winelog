@@ -114,6 +114,10 @@ export default function AddBottlePage() {
   const [drinkVenue, setDrinkVenue] = useState("");
   const [drinkRating, setDrinkRating] = useState("");
   const [drinkNotes, setDrinkNotes] = useState("");
+  const [tastingMode, setTastingMode] = useState<"quick" | "full">("quick");
+
+  // Full tasting spectrum state (1-5 scale each)
+  const [spectrumValues, setSpectrumValues] = useState<Record<string, number>>({});
 
   const producerInputRef = useRef<HTMLInputElement>(null);
   const grapeInputRef = useRef<HTMLInputElement>(null);
@@ -300,6 +304,9 @@ export default function AddBottlePage() {
             if (drinkVenue.trim()) drinkData.venue = drinkVenue.trim();
             if (drinkRating) drinkData.rating = parseInt(drinkRating);
             if (drinkNotes.trim()) drinkData.notes = drinkNotes.trim();
+            if (tastingMode === "full" && Object.keys(spectrumValues).length > 0) {
+              drinkData.tastingNotes = spectrumValues;
+            }
 
             await api.post(`/bottles/${response.id}/drinks`, drinkData);
           } catch (err) {
@@ -635,18 +642,113 @@ export default function AddBottlePage() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-[#1A1A1A]">
-                {t("bottles.drink_notes")}
-              </label>
-              <textarea
-                placeholder={t("bottles.drink_notes_placeholder")}
-                value={drinkNotes}
-                onChange={(e) => setDrinkNotes(e.target.value)}
-                maxLength={500}
-                className="min-h-16 w-full rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-3 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20 resize-none"
-              />
+            {/* Quick / Full Tasting Toggle */}
+            <div className="flex gap-1 bg-[#F5F1EB] p-1 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setTastingMode("quick")}
+                className={cn(
+                  "flex-1 py-2 px-3 text-sm font-semibold rounded-lg transition-all duration-200",
+                  tastingMode === "quick"
+                    ? "bg-white text-[#7C2D36] shadow-sm"
+                    : "text-[#6B7280] hover:text-[#1A1A1A]"
+                )}
+              >
+                {t("bottles.tasting_quick")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setTastingMode("full")}
+                className={cn(
+                  "flex-1 py-2 px-3 text-sm font-semibold rounded-lg transition-all duration-200",
+                  tastingMode === "full"
+                    ? "bg-white text-[#7C2D36] shadow-sm"
+                    : "text-[#6B7280] hover:text-[#1A1A1A]"
+                )}
+              >
+                {t("bottles.tasting_full")}
+              </button>
             </div>
+
+            {tastingMode === "quick" ? (
+              /* Quick: just text notes */
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-[#1A1A1A]">
+                  {t("bottles.drink_notes")}
+                </label>
+                <textarea
+                  placeholder={t("bottles.drink_notes_placeholder")}
+                  value={drinkNotes}
+                  onChange={(e) => setDrinkNotes(e.target.value)}
+                  maxLength={500}
+                  className="min-h-16 w-full rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-3 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20 resize-none"
+                />
+              </div>
+            ) : (
+              /* Full: spectrum sliders + text notes */
+              <div className="space-y-3">
+                {(isBeer
+                  ? [
+                      { key: "bitterness", label: t("bottles.spectrum_bitterness"), low: t("bottles.spectrum_low"), high: t("bottles.spectrum_high") },
+                      { key: "carbonation", label: t("bottles.spectrum_carbonation"), low: t("bottles.spectrum_flat"), high: t("bottles.spectrum_fizzy") },
+                      { key: "body", label: t("bottles.spectrum_body"), low: t("bottles.spectrum_light"), high: t("bottles.spectrum_full") },
+                      { key: "balance", label: t("bottles.spectrum_balance"), low: t("bottles.spectrum_poor"), high: t("bottles.spectrum_excellent") },
+                      { key: "drinkability", label: t("bottles.spectrum_drinkability"), low: t("bottles.spectrum_low"), high: t("bottles.spectrum_high") },
+                    ]
+                  : [
+                      { key: "sweetness", label: t("bottles.spectrum_sweetness"), low: t("bottles.spectrum_low"), high: t("bottles.spectrum_high") },
+                      { key: "acidity", label: t("bottles.spectrum_acidity"), low: t("bottles.spectrum_low"), high: t("bottles.spectrum_high") },
+                      { key: "tannin", label: t("bottles.spectrum_tannin"), low: t("bottles.spectrum_low"), high: t("bottles.spectrum_high") },
+                      { key: "body", label: t("bottles.spectrum_body"), low: t("bottles.spectrum_light"), high: t("bottles.spectrum_full") },
+                      { key: "finish", label: t("bottles.spectrum_finish"), low: t("bottles.spectrum_short"), high: t("bottles.spectrum_long") },
+                    ]
+                ).map(({ key, label, low, high }) => (
+                  <div key={key} className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-[#1A1A1A]">{label}</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-[#6B7280] w-10 text-right">{low}</span>
+                      <div className="flex-1 flex gap-1">
+                        {[1, 2, 3, 4, 5].map((val) => (
+                          <button
+                            key={val}
+                            type="button"
+                            onClick={() => setSpectrumValues((prev) => ({ ...prev, [key]: val }))}
+                            className={cn(
+                              "flex-1 h-8 rounded-lg text-xs font-bold transition-all duration-200",
+                              spectrumValues[key] === val
+                                ? isBeer
+                                  ? "bg-[#B45309] text-white shadow-md"
+                                  : "bg-[#7C2D36] text-white shadow-md"
+                                : spectrumValues[key] && spectrumValues[key] >= val
+                                  ? isBeer
+                                    ? "bg-[#B45309]/20 text-[#B45309]"
+                                    : "bg-[#7C2D36]/20 text-[#7C2D36]"
+                                  : "bg-[#F5F1EB] text-[#6B7280] hover:bg-[#E5E1DB]"
+                            )}
+                          >
+                            {val}
+                          </button>
+                        ))}
+                      </div>
+                      <span className="text-[10px] text-[#6B7280] w-10">{high}</span>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="flex flex-col gap-2 pt-2">
+                  <label className="text-sm font-semibold text-[#1A1A1A]">
+                    {t("bottles.drink_notes")}
+                  </label>
+                  <textarea
+                    placeholder={t("bottles.drink_notes_placeholder")}
+                    value={drinkNotes}
+                    onChange={(e) => setDrinkNotes(e.target.value)}
+                    maxLength={500}
+                    className="min-h-16 w-full rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-3 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20 resize-none"
+                  />
+                </div>
+              </div>
+            )}
           </Card>
         )}
 
