@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronUp, Globe, Loader2, MapPin, Plus, X } from "lucide-react";
+import { ChevronDown, ChevronUp, GlassWater, Globe, Loader2, MapPin, Plus, X } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -107,6 +107,13 @@ export default function AddBottlePage() {
   const [quantity, setQuantity] = useState("1");
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Consuming now state
+  const [consumingNow, setConsumingNow] = useState(false);
+  const [drinkContext, setDrinkContext] = useState("");
+  const [drinkVenue, setDrinkVenue] = useState("");
+  const [drinkRating, setDrinkRating] = useState("");
+  const [drinkNotes, setDrinkNotes] = useState("");
 
   const producerInputRef = useRef<HTMLInputElement>(null);
   const grapeInputRef = useRef<HTMLInputElement>(null);
@@ -275,10 +282,32 @@ export default function AddBottlePage() {
       if (currency) bottleData.priceCurrency = currency;
       if (notes.trim()) bottleData.notesShort = notes.trim();
 
+      // If consuming now, set status to consumed and quantity to 1
+      if (consumingNow) {
+        bottleData.status = "consumed";
+      }
+
       const response = await api.post("/bottles", bottleData);
 
       if (response && response.id) {
-        // If photo upload failed, pass a query param so the list can show a note
+        // Create drink log if consuming now
+        if (consumingNow) {
+          try {
+            const drinkData: Record<string, unknown> = {
+              drankAt: new Date().toISOString(),
+            };
+            if (drinkContext) drinkData.context = drinkContext;
+            if (drinkVenue.trim()) drinkData.venue = drinkVenue.trim();
+            if (drinkRating) drinkData.rating = parseInt(drinkRating);
+            if (drinkNotes.trim()) drinkData.notes = drinkNotes.trim();
+
+            await api.post(`/bottles/${response.id}/drinks`, drinkData);
+          } catch (err) {
+            console.error("Failed to create drink log:", err);
+            // Don't block — the bottle was saved successfully
+          }
+        }
+
         if (photoUploadFailed) {
           router.push("/bottles?photoSkipped=1");
         } else {
@@ -391,7 +420,7 @@ export default function AddBottlePage() {
             <input
               ref={grapeInputRef}
               type="text"
-              placeholder={grapes.length > 0 ? t(isBeer ? "bottles.add_style" : "bottles.add_grape") : t(isBeer ? "bottles.grape_placeholder_beer" : "bottles.grape_placeholder")}
+              placeholder={grapes.length > 0 ? t(`bottles.add_grape_${beverageType}`) : t(`bottles.grape_placeholder_${beverageType}`)}
               value={grapeInput}
               onChange={(e) => {
                 setGrapeInput(e.target.value);
@@ -505,6 +534,121 @@ export default function AddBottlePage() {
             <p className="text-xs text-[#6B7280] text-right">{notes.length}/500</p>
           )}
         </div>
+
+        {/* Consuming Now Toggle */}
+        <button
+          type="button"
+          onClick={() => setConsumingNow(!consumingNow)}
+          className={cn(
+            "flex items-center gap-3 w-full px-4 py-4 rounded-2xl border-2 transition-all duration-200",
+            consumingNow
+              ? isBeer
+                ? "border-[#B45309] bg-[#B45309]/10"
+                : "border-[#7C2D36] bg-[#7C2D36]/10"
+              : "border-[#E5E1DB] bg-white hover:border-[#7C2D36]/30"
+          )}
+        >
+          <GlassWater className={cn(
+            "w-5 h-5",
+            consumingNow
+              ? isBeer ? "text-[#B45309]" : "text-[#7C2D36]"
+              : "text-[#6B7280]"
+          )} />
+          <div className="flex-1 text-left">
+            <p className={cn(
+              "text-sm font-semibold",
+              consumingNow ? "text-[#1A1A1A]" : "text-[#6B7280]"
+            )}>
+              {t("bottles.consuming_now")}
+            </p>
+            <p className="text-xs text-[#6B7280]">{t("bottles.consuming_now_desc")}</p>
+          </div>
+          <div className={cn(
+            "w-10 h-6 rounded-full transition-all duration-200 flex items-center px-0.5",
+            consumingNow
+              ? isBeer ? "bg-[#B45309]" : "bg-[#7C2D36]"
+              : "bg-[#D1D5DB]"
+          )}>
+            <div className={cn(
+              "w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200",
+              consumingNow ? "translate-x-4" : "translate-x-0"
+            )} />
+          </div>
+        </button>
+
+        {/* Consuming Now Details */}
+        {consumingNow && (
+          <Card variant="outlined" className="p-5 rounded-2xl space-y-4 border-2 border-dashed">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-[#1A1A1A]">
+                {t("bottles.drink_context")}
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  { key: "casual", label: t("bottles.context_casual") },
+                  { key: "dinner", label: t("bottles.context_dinner") },
+                  { key: "celebration", label: t("bottles.context_celebration") },
+                  { key: "tasting", label: t("bottles.context_tasting") },
+                ].map(({ key, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setDrinkContext(drinkContext === key ? "" : key)}
+                    className={cn(
+                      "inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium transition-all",
+                      drinkContext === key
+                        ? isBeer
+                          ? "bg-[#B45309] text-white shadow-md"
+                          : "bg-[#7C2D36] text-white shadow-md"
+                        : "bg-white border-2 border-[#E5E1DB] text-[#1A1A1A] hover:border-[#7C2D36]/30"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <Input
+              label={t("bottles.drink_venue")}
+              placeholder={t("bottles.drink_venue_placeholder")}
+              value={drinkVenue}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDrinkVenue(e.target.value)}
+            />
+
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-[#1A1A1A]">
+                {t("bottles.drink_rating")}
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={drinkRating || 50}
+                  onChange={(e) => setDrinkRating(e.target.value)}
+                  className="flex-1 accent-[#7C2D36]"
+                />
+                <span className="text-sm font-bold text-[#1A1A1A] w-10 text-right">
+                  {drinkRating || "—"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-[#1A1A1A]">
+                {t("bottles.drink_notes")}
+              </label>
+              <textarea
+                placeholder={t("bottles.drink_notes_placeholder")}
+                value={drinkNotes}
+                onChange={(e) => setDrinkNotes(e.target.value)}
+                maxLength={500}
+                className="min-h-16 w-full rounded-xl border-2 border-[#E5E1DB] bg-white px-4 py-3 text-sm text-[#1A1A1A] placeholder:text-[#6B7280] transition-all focus:outline-none focus:border-[#7C2D36] focus:ring-2 focus:ring-[#7C2D36]/20 resize-none"
+              />
+            </div>
+          </Card>
+        )}
 
         {/* Storage Location */}
         <div className="flex flex-col gap-2">

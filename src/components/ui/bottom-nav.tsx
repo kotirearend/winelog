@@ -29,7 +29,7 @@ export function BottomNav() {
   const accentColor = isBeer ? "#B45309" : "#7C2D36";
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full sm:max-w-[430px] z-50">
       <div className="mx-3 mb-3 rounded-2xl bg-white/80 backdrop-blur-xl border border-white/20 shadow-lg shadow-black/10">
         <div className="flex items-center justify-around px-2 py-2">
           {NAV_ITEMS.map((item) => {

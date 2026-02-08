@@ -34,13 +34,15 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
       </head>
       <body>
-        <AuthProvider>
-          <I18nProvider>
-            <ToastProvider>
-              {children}
-            </ToastProvider>
-          </I18nProvider>
-        </AuthProvider>
+        <div className="app-shell">
+          <AuthProvider>
+            <I18nProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </I18nProvider>
+          </AuthProvider>
+        </div>
       </body>
     </html>
   );

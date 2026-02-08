@@ -46,20 +46,40 @@ body {
   min-height: 100dvh;
 }
 
-/* Mobile app container */
+/* Dark desktop wrapper — gives a rich dark surround on wide screens */
+@media (min-width: 640px) {
+  body {
+    background: linear-gradient(160deg, #1a1118 0%, #2d1520 40%, #1a1118 100%);
+  }
+}
+
+/* App shell — phone-like container on desktop */
+.app-shell {
+  min-height: 100dvh;
+}
+
+@media (min-width: 640px) {
+  .app-shell {
+    max-width: 430px;
+    margin: 0 auto;
+    background-color: var(--cream);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.05),
+      0 25px 80px rgba(0,0,0,0.5),
+      0 0 120px rgba(124,45,54,0.15);
+    border-radius: 1.25rem;
+    overflow: hidden;
+    min-height: 100dvh;
+    position: relative;
+  }
+}
+
+/* Mobile app container — legacy, kept for compat */
 .app-container {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100dvh;
   position: relative;
-  background: white;
-  box-shadow: 0 0 40px rgba(0,0,0,0.05);
-}
-
-@media (max-width: 480px) {
-  .app-container {
-    box-shadow: none;
-  }
 }
 
 /* Safe area for bottom nav */
