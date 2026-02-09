@@ -30,12 +30,18 @@ export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [defaultCurrency, setDefaultCurrency] = useState("GBP");
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (password !== confirmPassword) {
+      setError(t("auth.passwords_no_match"));
+      return;
+    }
 
     try {
       await signup(email, password, name, defaultCurrency);
@@ -111,6 +117,17 @@ export default function SignupPage() {
           placeholder="••••••••"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
+          disabled={isLoading}
+        />
+
+        {/* Confirm Password Input */}
+        <Input
+          label={t("auth.confirm_password_label")}
+          type="password"
+          placeholder="••••••••"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
           required
           disabled={isLoading}
         />

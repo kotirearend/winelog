@@ -52,6 +52,8 @@
   "auth.already_member": "Già membro?",
   "auth.sign_in_link": "Accedi al tuo account",
   "auth.signup_success": "Account creato con successo",
+  "auth.confirm_password_label": "Conferma password",
+  "auth.passwords_no_match": "Le password non corrispondono",
   "auth.signup_failed": "Registrazione non riuscita",
 
   "settings.title": "Impostazioni",
