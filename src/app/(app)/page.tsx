@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Loading } from "@/components/ui/loading";
-import { Plus, Wine, Beer, ClipboardList, ChevronRight, Users, ArrowRight } from "lucide-react";
+import { Plus, Wine, Beer, ClipboardList, ChevronRight, Users, ArrowRight, BarChart3 } from "lucide-react";
 import { WinelogLogo } from "@/components/ui/winelog-logo";
 
 interface Bottle {
@@ -106,12 +106,15 @@ export default function HomePage() {
           {/* Logo + Greeting */}
           <div className="flex items-center gap-3 mb-6">
             <WinelogLogo size="sm" variant="icon" color="cream" />
-            <div>
+            <div className="flex-1">
               <h1 className="text-2xl font-bold tracking-tight">
                 {t("home.greeting", { name: user?.name?.split(" ")[0] || "" })}
               </h1>
               <p className="text-white/50 text-xs mt-0.5">{t(`home.subtitle_${beverageType}`)}</p>
             </div>
+            <Link href="/stats" className="flex-shrink-0 w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center hover:bg-white/25 transition-colors active:scale-95">
+              <BarChart3 className="w-5 h-5 text-white" />
+            </Link>
           </div>
 
           {/* Stats */}
