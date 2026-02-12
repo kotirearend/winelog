@@ -28,34 +28,89 @@ const COMMON_GRAPES = [
 const COMMON_REGIONS = [
   // France
   "Bordeaux", "Burgundy", "Champagne", "Rhône Valley", "Loire Valley",
-  "Alsace", "Languedoc", "Provence", "Beaujolais", "Chablis",
-  "Saint-Émilion", "Pauillac", "Margaux", "Médoc", "Graves",
-  "Côtes du Rhône", "Châteauneuf-du-Pape", "Sancerre", "Pouilly-Fumé",
+  "Alsace", "Languedoc", "Languedoc-Roussillon", "Provence", "Beaujolais",
+  "Chablis", "Jura", "Savoie", "Corsica", "Sud-Ouest",
+  "Saint-Émilion", "Pauillac", "Margaux", "Médoc", "Haut-Médoc", "Graves",
+  "Pessac-Léognan", "Pomerol", "Sauternes", "Entre-Deux-Mers",
+  "Côtes du Rhône", "Châteauneuf-du-Pape", "Hermitage", "Côte-Rôtie",
+  "Crozes-Hermitage", "Condrieu", "Gigondas", "Vacqueyras",
+  "Sancerre", "Pouilly-Fumé", "Vouvray", "Muscadet", "Chinon", "Anjou",
+  "Côte de Nuits", "Côte de Beaune", "Côte Chalonnaise", "Mâconnais",
+  "Meursault", "Puligny-Montrachet", "Gevrey-Chambertin", "Nuits-Saint-Georges",
+  "Pommard", "Volnay", "Corton", "Clos de Vougeot",
   // Italy
-  "Tuscany", "Piedmont", "Veneto", "Sicily", "Puglia",
-  "Chianti", "Barolo", "Barbaresco", "Brunello di Montalcino",
-  "Valpolicella", "Prosecco", "Soave", "Amalfi Coast",
+  "Tuscany", "Piedmont", "Veneto", "Sicily", "Puglia", "Sardinia",
+  "Lombardy", "Trentino-Alto Adige", "Friuli Venezia Giulia", "Umbria",
+  "Abruzzo", "Campania", "Calabria", "Basilicata", "Marche", "Emilia-Romagna",
+  "Chianti", "Chianti Classico", "Barolo", "Barbaresco", "Brunello di Montalcino",
+  "Valpolicella", "Amarone", "Prosecco", "Soave", "Amalfi Coast",
+  "Bolgheri", "Montalcino", "Montepulciano", "Etna", "Franciacorta",
+  "Gavi", "Asti", "Langhe", "Roero", "Taurasi",
   // Spain
   "Rioja", "Ribera del Duero", "Priorat", "Rías Baixas",
-  "Penedès", "Navarra", "La Mancha", "Jerez",
+  "Penedès", "Navarra", "La Mancha", "Jerez", "Rueda",
+  "Toro", "Jumilla", "Cava", "Galicia", "Bierzo",
+  "Valdepeñas", "Somontano", "Montsant", "Empordà", "Txakoli",
   // Portugal
   "Douro Valley", "Alentejo", "Dão", "Vinho Verde", "Madeira",
-  // Germany & Austria
-  "Mosel", "Rheingau", "Pfalz", "Baden", "Wachau", "Kamptal",
-  // New World — Australia
+  "Bairrada", "Lisboa", "Setúbal", "Tejo", "Azores",
+  // Germany
+  "Mosel", "Rheingau", "Pfalz", "Baden", "Rheinhessen",
+  "Nahe", "Franken", "Württemberg", "Ahr", "Sachsen",
+  // Austria
+  "Wachau", "Kamptal", "Kremstal", "Burgenland", "Steiermark",
+  "Weinviertel", "Thermenregion", "Neusiedlersee",
+  // Australia
   "Barossa Valley", "McLaren Vale", "Hunter Valley", "Yarra Valley",
   "Margaret River", "Coonawarra", "Clare Valley", "Adelaide Hills",
-  // New World — New Zealand
+  "Eden Valley", "Mornington Peninsula", "Rutherglen", "Tasmania",
+  "Mudgee", "Riverina", "Langhorne Creek", "Heathcote",
+  // New Zealand
   "Marlborough", "Central Otago", "Hawke's Bay", "Martinborough",
-  // New World — South Africa
+  "Gisborne", "Waiheke Island", "Canterbury", "Nelson", "Wairarapa",
+  // South Africa
   "Stellenbosch", "Franschhoek", "Swartland", "Constantia", "Paarl",
-  // New World — USA
+  "Elgin", "Walker Bay", "Hemel-en-Aarde", "Robertson", "Tulbagh",
+  "Elim", "Darling", "Breedekloof",
+  // USA
   "Napa Valley", "Sonoma", "Willamette Valley", "Paso Robles",
   "Santa Barbara", "Columbia Valley", "Finger Lakes",
-  // New World — South America
-  "Mendoza", "Maipo Valley", "Colchagua Valley", "Casablanca Valley",
+  "Russian River Valley", "Anderson Valley", "Walla Walla",
+  "Dry Creek Valley", "Alexander Valley", "Carneros",
+  "Santa Cruz Mountains", "Lodi", "Temecula Valley",
+  "Lake County", "Livermore Valley", "Red Mountain",
+  // South America — Argentina
+  "Mendoza", "Uco Valley", "Luján de Cuyo", "Salta", "Cafayate",
+  "San Juan", "Patagonia",
+  // South America — Chile
+  "Maipo Valley", "Colchagua Valley", "Casablanca Valley",
+  "Rapel Valley", "Aconcagua Valley", "Leyda Valley", "Bío Bío Valley",
+  "Maule Valley", "Itata Valley", "Limarí Valley",
+  // South America — Brazil & Uruguay
+  "Serra Gaúcha", "Vale dos Vinhedos", "Canelones",
+  // Canada
+  "Niagara Peninsula", "Okanagan Valley", "Prince Edward County",
+  "Similkameen Valley", "Nova Scotia",
+  // England & Wales
+  "Sussex", "Kent", "Hampshire", "Surrey", "Essex", "Cornwall",
+  // Eastern Europe
+  "Tokaj", "Eger", "Villány", "Szekszárd",
+  "Moravia", "Bohemia",
+  "Podravje", "Posavje",
+  "Istria", "Dalmatia", "Slavonia",
+  "Dealu Mare", "Moldovan Hills", "Transylvania",
+  "Thracian Valley",
+  // Greece
+  "Santorini", "Nemea", "Naoussa", "Crete", "Macedonia", "Peloponnese",
+  "Amyndeon", "Mantinia",
+  // Middle East & Caucasus
+  "Bekaa Valley", "Kakheti", "Kartli",
+  // North Africa
+  "Atlas Mountains",
+  // Asia
+  "Ningxia", "Yantai", "Nashik", "Koshu",
   // Other
-  "Santorini", "Tokaj", "Niagara Peninsula",
+  "Swartberg", "Limoux", "Bandol", "Cahors", "Irouléguy", "Fitou",
 ];
 
 const COMMON_BEER_STYLES = [
